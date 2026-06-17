@@ -69,10 +69,27 @@ export default function LoginView() {
     }
   };
 
+  const getMockUser = (demoUser: DemoUser) => ({
+    id: demoUser.id,
+    email: demoUser.email,
+    name: demoUser.name,
+    employeeId: demoUser.role === 'admin' ? 'ECI-001' : demoUser.role === 'supervisor' && demoUser.id === '2' ? 'ECI-002' : demoUser.role === 'supervisor' ? 'ECI-003' : demoUser.role === 'management' ? 'ECI-004' : demoUser.id === '5' ? 'ECI-005' : 'ECI-006',
+    designation: demoUser.role === 'admin' ? 'HR Manager' : demoUser.role === 'supervisor' ? 'Team Lead' : demoUser.role === 'management' ? 'CEO' : 'Officer',
+    department: demoUser.role === 'admin' ? 'Administration' : demoUser.role === 'supervisor' && demoUser.id === '2' ? 'Engineering' : demoUser.role === 'supervisor' ? 'Operations' : demoUser.role === 'management' ? 'Management' : demoUser.id === '5' ? 'Engineering' : 'Finance',
+    phone: '+92-300-000000' + demoUser.id,
+    overallExp: demoUser.role === 'admin' ? '10 years' : demoUser.role === 'management' ? '20 years' : '5 years',
+    yearsWithECI: demoUser.role === 'admin' ? '8 years' : demoUser.role === 'management' ? '15 years' : '3 years',
+    currentEdu: demoUser.role === 'admin' ? 'MBA (HRM)' : demoUser.role === 'management' ? 'MBA' : 'BS',
+    lineManagerId: demoUser.role === 'supervisor' ? 'cmqhtmwr8001qmq3k497m6k4v' : demoUser.role === 'employee' ? (demoUser.id === '5' ? 'cmqhtmwr9003smq3knylj3q9z' : 'cmqhtmwra001tmq3kod69yveg') : null,
+    role: demoUser.role as any,
+    isActive: true,
+    lineManager: null,
+  });
+
   const handleDemoLogin = async (demoUser: DemoUser) => {
     setDemoLoading(demoUser.role);
     try {
-      // Try to find a real user, otherwise use demo data
+      // Try to find a real user from the database
       const res = await fetch(`/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,29 +102,15 @@ export default function LoginView() {
         setCurrentView('dashboard');
         toast.success(`Welcome, ${user.name}!`);
       } else {
-        // Fallback: create a mock user for demo
-        setCurrentUser({
-          id: demoUser.id,
-          email: demoUser.email,
-          name: demoUser.name,
-          employeeId: `ECI-${demoUser.role.toUpperCase()}-001`,
-          designation: demoUser.role === 'admin' ? 'HR Manager' : demoUser.role === 'supervisor' ? 'Team Lead' : demoUser.role === 'management' ? 'CEO' : 'Officer',
-          department: demoUser.role === 'admin' ? 'Human Resources' : 'Operations',
-          phone: '',
-          overallExp: '5 Years',
-          yearsWithECI: '3 Years',
-          currentEdu: 'MBA',
-          lineManagerId: null,
-          role: demoUser.role as any,
-          isActive: true,
-          lineManager: null,
-        });
-        setIsLoggedIn(true);
-        setCurrentView('dashboard');
-        toast.success(`Demo login as ${demoUser.label}`);
+        throw new Error('API not available');
       }
     } catch {
-      toast.error('Demo login failed');
+      // Fallback: use mock user data when API is unavailable
+      const mockUser = getMockUser(demoUser);
+      setCurrentUser(mockUser);
+      setIsLoggedIn(true);
+      setCurrentView('dashboard');
+      toast.success(`Demo login as ${demoUser.label}`);
     } finally {
       setDemoLoading(null);
     }
