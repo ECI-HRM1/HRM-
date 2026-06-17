@@ -213,6 +213,15 @@ export default function AppraisalForm() {
     }
   };
 
+  // Determine the workflow action based on current user role
+  const getSubmitAction = (): string => {
+    if (userRole === 'employee') return 'employee_submit';
+    if (userRole === 'supervisor') return 'supervisor_submit';
+    if (userRole === 'admin') return 'hr_submit';
+    if (userRole === 'management') return 'management_approve';
+    return 'employee_submit';
+  };
+
   // Submit
   const handleSubmit = async () => {
     if (!assignmentId || !formData) return;
@@ -235,7 +244,12 @@ export default function AppraisalForm() {
         body: JSON.stringify(formData),
       });
 
-      const res = await fetch(`/api/assignments/${assignmentId}/submit`, { method: 'POST' });
+      const action = getSubmitAction();
+      const res = await fetch(`/api/assignments/${assignmentId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
       if (res.ok) {
         toast.success('Appraisal submitted successfully');
         setCurrentView('appraisal-list');
@@ -258,10 +272,10 @@ export default function AppraisalForm() {
     }
     setReturning(true);
     try {
-      const res = await fetch(`/api/assignments/${assignmentId}/return`, {
+      const res = await fetch(`/api/assignments/${assignmentId}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: returnReason }),
+        body: JSON.stringify({ action: 'management_return', returnReason }),
       });
       if (res.ok) {
         toast.success('Appraisal returned for correction');

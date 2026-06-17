@@ -33,6 +33,11 @@ const WORKFLOW_TRANSITIONS: Record<string, { newStatus: string; nextActionBy: st
     nextActionBy: 'employee',
     timestampField: 'acknowledgedByEmployeeAt',
   },
+  hr_share: {
+    newStatus: 'shared_with_employee',
+    nextActionBy: 'employee',
+    timestampField: '',
+  },
 };
 
 // Valid current statuses for each action
@@ -43,6 +48,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   management_approve: ['submitted_to_management', 'under_management_review'],
   management_return: ['submitted_to_management', 'under_management_review'],
   employee_acknowledge: ['approved', 'shared_with_employee'],
+  hr_share: ['approved'],
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -135,6 +141,7 @@ export async function POST(
       management_approve: 'Management',
       management_return: 'Management',
       employee_acknowledge: assignment.employee.name,
+      hr_share: 'HR Team',
     };
 
     await db.auditLog.create({
@@ -252,6 +259,28 @@ export async function POST(
             link: `/appraisal/${id}`,
           });
         }
+        break;
+
+      case 'hr_share':
+        notificationsToCreate.push({
+          userId: assignment.employeeId,
+          assignmentId: id,
+          type: 'management_approved',
+          title: 'Appraisal Shared - Please Acknowledge',
+          message: `Your appraisal for "${assignment.cycle.name}" has been approved and shared with you. Please review and acknowledge.`,
+          actionRequired: true,
+          link: `/appraisal/${id}`,
+        });
+        // Also notify supervisor
+        notificationsToCreate.push({
+          userId: assignment.supervisorId,
+          assignmentId: id,
+          type: 'reminder',
+          title: 'Appraisal Shared with Employee',
+          message: `${assignment.employee.name}'s appraisal for "${assignment.cycle.name}" has been shared with the employee.`,
+          actionRequired: false,
+          link: `/appraisal/${id}`,
+        });
         break;
     }
 

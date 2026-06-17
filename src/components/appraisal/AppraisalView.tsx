@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, Share2, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   AppraisalFormDataFull,
@@ -26,12 +26,13 @@ import {
 import { APPRAISAL_STATUS_LABELS, APPRAISAL_STATUS_COLORS } from '@/lib/constants';
 
 export default function AppraisalView() {
-  const { viewParams, setCurrentView } = useAppStore();
+  const { viewParams, setCurrentView, currentUser } = useAppStore();
   const assignmentId = viewParams?.id;
 
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null);
   const [formData, setFormData] = useState<AppraisalFormDataFull | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (!assignmentId) return;
@@ -74,6 +75,56 @@ export default function AppraisalView() {
   if (!assignment || !formData) {
     return <div className="text-center py-12 text-muted-foreground">Appraisal not found</div>;
   }
+
+  const userRole = currentUser?.role || 'employee';
+  const canShare = (userRole === 'admin') && assignment.status === 'approved';
+  const canAcknowledge = userRole === 'employee' && (assignment.status === 'approved' || assignment.status === 'shared_with_employee');
+
+  const handleShareWithEmployee = async () => {
+    if (!assignmentId) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/assignments/${assignmentId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'hr_share' }),
+      });
+      if (res.ok) {
+        toast.success('Appraisal shared with employee');
+        setCurrentView('appraisal-list');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to share');
+      }
+    } catch {
+      toast.error('Failed to share');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAcknowledge = async () => {
+    if (!assignmentId) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/assignments/${assignmentId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'employee_acknowledge' }),
+      });
+      if (res.ok) {
+        toast.success('Appraisal acknowledged successfully');
+        setCurrentView('appraisal-list');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to acknowledge');
+      }
+    } catch {
+      toast.error('Failed to acknowledge');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   function SectionHeader({ number, title }: { number: number; title: string }) {
     return (
@@ -129,6 +180,18 @@ export default function AppraisalView() {
           <Printer className="h-4 w-4 mr-2" />
           Print
         </Button>
+        {canShare && (
+          <Button className="eci-btn-primary" onClick={handleShareWithEmployee} disabled={actionLoading}>
+            {actionLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Share2 className="h-4 w-4 mr-2" />}
+            Share with Employee
+          </Button>
+        )}
+        {canAcknowledge && (
+          <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleAcknowledge} disabled={actionLoading}>
+            {actionLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+            Acknowledge
+          </Button>
+        )}
       </div>
 
       {/* Section 1: Basic Information */}
