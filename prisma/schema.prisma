@@ -203,6 +203,35 @@ model AppraisalFormData {
   updatedAt              DateTime @updatedAt
 }
 
+model RatingScale {
+  id          String   @id @default(cuid())
+  name        String
+  description  String   @default("")
+  minScore    Int      @default(0)
+  maxScore    Int      @default(5)
+  labelsJson  String   @default("[]") // e.g. [{"score":0,"label":"N/A"},{"score":1,"label":"Poor"},...]
+  appliesTo   String   @default("")  // "goals", "competencies", "explanations", or ""
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categories  AppraisalCategory[]
+}
+
+model AppraisalCategory {
+  id            String      @id @default(cuid())
+  name          String
+  section       String      // "goals", "technical_skills", "leadership_skills", "managerial_skills", "explanations"
+  description   String      @default("")
+  sortOrder     Int         @default(0)
+  ratingScaleId String?
+  ratingScale   RatingScale? @relation(fields: [ratingScaleId], references: [id])
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
 model Notification {
   id              String   @id @default(cuid())
   userId          String

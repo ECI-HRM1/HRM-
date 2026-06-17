@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const includeInactive = searchParams.get('includeInactive') === 'true';
+
     const designations = await db.designation.findMany({
-      where: { isActive: true },
+      where: includeInactive ? {} : { isActive: true },
       orderBy: { title: 'asc' },
     });
 
-    return NextResponse.json({ designations });
+    // Compute user count per designation (by title)
+    const designationsWithCounts = await Promise.all(
+      designations.map(async (desig) => {
+        const userCount = await db.user.count({
+          where: { designation: desig.title, isActive: true },
+        });
+        return {
+          ...desig,
+          employeeCount: userCount,
+        };
+      })
+    );
+
+    return NextResponse.json({ designations: designationsWithCounts });
   } catch (error) {
     console.error('List designations error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

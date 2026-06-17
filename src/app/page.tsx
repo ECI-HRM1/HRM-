@@ -2,21 +2,30 @@
 
 import { useAppStore } from '@/store/app-store';
 
-// View Components
+// Dashboard Components
 import AdminDashboard from '@/components/dashboards/AdminDashboard';
 import SupervisorDashboard from '@/components/dashboards/SupervisorDashboard';
 import ManagementDashboard from '@/components/dashboards/ManagementDashboard';
 import EmployeeDashboard from '@/components/dashboards/EmployeeDashboard';
+
+// Master Data Components (Enhanced)
+import MasterDataOverview from '@/components/master/MasterDataOverview';
+import EnhancedEmployeeList from '@/components/master/EnhancedEmployeeList';
+import EnhancedEmployeeForm from '@/components/master/EnhancedEmployeeForm';
+import EnhancedDepartmentList from '@/components/master/EnhancedDepartmentList';
+import EnhancedDesignationList from '@/components/master/EnhancedDesignationList';
+import RatingScaleManager from '@/components/master/RatingScaleManager';
+import AppraisalCategoryManager from '@/components/master/AppraisalCategoryManager';
+
+// Appraisal Components
 import CycleList from '@/components/cycles/CycleList';
 import CycleForm from '@/components/cycles/CycleForm';
 import CycleDetail from '@/components/cycles/CycleDetail';
-import EmployeeList from '@/components/employees/EmployeeList';
-import EmployeeForm from '@/components/employees/EmployeeForm';
-import DepartmentList from '@/components/employees/DepartmentList';
-import DesignationList from '@/components/employees/DesignationList';
 import AppraisalList from '@/components/appraisal/AppraisalList';
 import AppraisalForm from '@/components/appraisal/AppraisalForm';
 import AppraisalView from '@/components/appraisal/AppraisalView';
+
+// Other Components
 import NotificationPanel from '@/components/notifications/NotificationPanel';
 import ReportViewer from '@/components/reports/ReportViewer';
 import AuditLogViewer from '@/components/reports/AuditLogViewer';
@@ -44,27 +53,36 @@ function ViewRouter() {
   switch (currentView) {
     case 'dashboard':
       return <DashboardRouter />;
+    // Master Data
+    case 'master-data':
+      return <MasterDataOverview />;
+    case 'employees':
+      return <EnhancedEmployeeList />;
+    case 'employee-create':
+    case 'employee-detail':
+      return <EnhancedEmployeeForm />;
+    case 'departments':
+      return <EnhancedDepartmentList />;
+    case 'designations':
+      return <EnhancedDesignationList />;
+    case 'rating-scales':
+      return <RatingScaleManager />;
+    case 'appraisal-categories':
+      return <AppraisalCategoryManager />;
+    // Appraisal
     case 'cycles':
       return <CycleList />;
     case 'cycle-create':
       return <CycleForm />;
     case 'cycle-detail':
       return <CycleDetail />;
-    case 'employees':
-      return <EmployeeList />;
-    case 'employee-create':
-    case 'employee-detail':
-      return <EmployeeForm />;
-    case 'departments':
-      return <DepartmentList />;
-    case 'designations':
-      return <DesignationList />;
     case 'appraisal-list':
       return <AppraisalList />;
     case 'appraisal-form':
       return <AppraisalForm />;
     case 'appraisal-view':
       return <AppraisalView />;
+    // Other
     case 'notifications':
       return <NotificationPanel />;
     case 'reports':

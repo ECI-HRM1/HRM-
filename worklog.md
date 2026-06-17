@@ -157,3 +157,77 @@ Stage Summary:
 - Appraisal form matches Excel template structure with proper role-based access control
 - Full workflow: Employee fills → Supervisor reviews → HR reviews → Management approves
 - Demo users cover all 4 roles with real seeded data
+
+---
+Task ID: 4
+Agent: Backend API Developer
+Task: Create/enhance ALL API routes for Master Data Management system
+
+Work Log:
+- Created /src/app/api/departments/[id]/route.ts — GET (single dept with employeeCount, designationCount, appraisalCount), PUT (update name with uniqueness validation), DELETE (safe delete: deactivate if linked users exist, permanent delete if no active users)
+- Created /src/app/api/designations/[id]/route.ts — GET (single designation with employeeCount), PUT (update title/requiredExp/requiredEdu/department with title uniqueness), DELETE (safe delete: deactivate if linked users, permanent delete otherwise)
+- Enhanced /src/app/api/departments/route.ts — GET now supports ?includeInactive=true param, includes employeeCount and designationCount for each department via async mapping. POST unchanged (already validates non-empty name)
+- Enhanced /src/app/api/designations/route.ts — GET now supports ?includeInactive=true param, includes employeeCount for each designation via async mapping. POST unchanged (already ensures department populated)
+- Enhanced /src/app/api/users/route.ts — Removed default role=employee filter, returns ALL users by default. Added ?includeInactive=true param (default shows only active). Added _count of appraisals, supervisorAppraisals, supervisedEmployees per user
+- Enhanced /src/app/api/users/[id]/route.ts — GET includes _count of appraisals/supervisorAppraisals plus supervisedEmployees array. PUT adds comment about snapshot behavior. DELETE checks AppraisalAssignment counts and returns hasAppraisals boolean
+- Created /src/app/api/rating-scales/route.ts — GET returns all scales with _count of categories, supports ?appliesTo=goals filter, sorted by sortOrder. POST creates scale with all fields
+- Created /src/app/api/rating-scales/[id]/route.ts — GET returns single scale with active categories. PUT updates all fields. DELETE safe pattern: deactivate if categories reference it, permanent delete otherwise
+- Created /src/app/api/appraisal-categories/route.ts — GET returns all categories with ratingScale relation, supports ?section=technical_skills filter, sorted by sortOrder. POST creates category with validation
+- Created /src/app/api/appraisal-categories/[id]/route.ts — GET returns single category with ratingScale. PUT updates all fields. DELETE always deactivates (categories used in templates should never be permanently deleted)
+- Created /src/app/api/master-data/stats/route.ts — GET returns comprehensive stats: totalEmployees/active/inactive, employeesByRole (grouped), totalDepartments/active, totalDesignations/active, totalRatingScales, totalCategories, employeesWithoutSupervisor count, departmentsWithoutEmployees list
+- Updated /src/app/api/seed/route.ts — Added cleanup for appraisalCategory and ratingScale deleteMany. Created 3 rating scales (Goals 0-3, Competency 1-5, Explanation 0-3) with proper labels. Created 22 appraisal categories from constants.ts (10 technical, 5 leadership, 7 managerial) each referencing competencyScale
+- All routes use NextRequest/NextResponse, params: Promise<{ id: string }> with await params, proper error handling (400/404/409/500)
+- ESLint passes with zero errors
+
+Stage Summary:
+- 8 new route files created, 4 existing route files enhanced, 1 seed file updated = 13 files total
+- Complete Master Data Management API coverage: departments, designations, users (list/detail), rating scales, appraisal categories, stats
+- All routes implement safe delete patterns (deactivate vs permanent delete based on linked records)
+- Seed endpoint now creates 3 rating scales + 22 appraisal categories alongside existing seed data
+
+---
+Task ID: 10
+Agent: Frontend Components Developer
+Task: Build ALL enhanced master data frontend components (7 components)
+
+Work Log:
+- Created /src/components/master/MasterDataOverview.tsx (301 lines) — Dashboard with 6 stat cards (Employees/Departments/Designations/Rating Scales/Categories/Without Supervisor), employees-by-role horizontal bar chart with color-coded progress bars, data health section showing issues (employees without supervisor, empty departments), quick action navigation buttons, loading skeleton, empty/retry state
+- Created /src/components/master/EnhancedDepartmentList.tsx (409 lines) — Full CRUD with search filter, show/hide inactive toggle, table with Name/Employees/Designations/Status/Created/Actions columns, create+edit dialog, safe-delete confirmation showing employee count (deactivate vs permanent delete messaging), activate/deactivate toggle via PUT with isActive
+- Created /src/components/master/EnhancedDesignationList.tsx (525 lines) — Full CRUD with search + department filter, show/hide inactive toggle, table with Title/ReqExp/ReqEdu/Department/Employees/Status/Created/Actions, create+edit dialog with all fields, safe-delete with linked employee count, activate/deactivate toggle
+- Created /src/components/master/EnhancedEmployeeList.tsx (462 lines) — Comprehensive user management with search (name/email/ID), department/designation/role/status filter dropdowns, show inactive toggle, table with EmpID/Name/Email/Designation/Department/Role(colored badge)/LineManager/Status/Appraisals/Actions, role badges (admin=red, hr=purple, supervisor=blue, management=amber, employee=green), click-to-edit on name, safe-delete showing appraisal count, activate/deactivate toggle
+- Created /src/components/master/EnhancedEmployeeForm.tsx (481 lines) — Card-based sections: Personal Info (ID/name/email/phone), Employment Details (designation auto-fills department, role with 5 descriptions, exp/edu), Reporting Structure (line manager from supervisor+management+admin users), Account Status (active toggle with derived login access badge). Supervisor info alert showing supervised employee count on edit. Email format validation. Back/Save/Cancel buttons.
+- Created /src/components/master/RatingScaleManager.tsx (537 lines) — Table with Name/Description/Range/AppliesTo/Categories/Status/Actions, create+edit dialog with name/description/min-max score/appliesTo select/dynamic score-label list (add/remove rows), sort order. AppliesTo badge colors (Goals=blue, Competencies=emerald, Explanations=rose, General=gray). Activate/deactivate toggle, delete confirmation.
+- Created /src/components/master/AppraisalCategoryManager.tsx (505 lines) — Section filter tabs (All/Goals/Technical/Leadership/Managerial/Explanations), table with Name/Section(badge)/Description/RatingScale/SortOrder/Status/Actions, section badge colors (goals=blue, technical=emerald, leadership=amber, managerial=purple, explanations=rose). Create+edit dialog with name/section/description/rating scale select/sort order. Activate/deactivate toggle, delete confirmation.
+- All 7 components use shadcn/ui, Tailwind, lucide-react, sonner toasts, responsive design, loading skeletons
+- Total: 3,220 lines across 7 components
+
+Stage Summary:
+- 7 production-ready frontend components created in /src/components/master/
+- Components consume the enhanced API endpoints (master-data/stats, rating-scales, appraisal-categories, departments?includeInactive, designations?includeInactive)
+- All components handle loading/empty/error states with skeletons and empty messages
+- Safe-delete patterns implemented in department, designation, and employee management
+- Rating scale manager supports dynamic score-label pairs
+- Appraisal category manager has section-based filtering with color-coded badges
+
+---
+Task ID: 17-19
+Agent: Main Orchestrator
+Task: Integration, sidebar restructuring, N+1 optimization, API fixes, verification
+
+Work Log:
+- Updated prisma/schema.prisma with RatingScale and AppraisalCategory models, pushed to DB
+- Updated src/lib/types.ts with new types: DepartmentDetail, DesignationDetail, RatingScaleItem, AppraisalCategoryItem, MasterDataStats, enhanced EmployeeDetail with _count/supervisedEmployees/createdAt
+- Added 'master-data', 'rating-scales', 'appraisal-categories' to AppView type union
+- Rebuilt src/components/layout/AppSidebar.tsx with grouped navigation: Main, Master Data (Overview, Employees, Departments, Designations, Rating Scales, Appraisal Categories), Appraisal (Cycles, Appraisals), Communication (Notifications), Reports & Settings
+- Updated src/app/page.tsx ViewRouter to use all 7 new enhanced components from /src/components/master/
+- Fixed N+1 query in EnhancedDepartmentList and EnhancedDesignationList (was fetching individual detail per item; now uses list API counts directly)
+- Fixed departments/route.ts empty include._count.select that caused Prisma errors (removed the empty include block)
+- Ran comprehensive API test suite: 23/23 tests passed covering all CRUD operations, safe delete logic, and data integrity
+- Seeded database with 3 rating scales + 22 appraisal categories + all existing data
+
+Stage Summary:
+- Complete Master Data Management system integrated and verified
+- Sidebar restructured with 5 groups and 15 navigation items (role-filtered)
+- All API endpoints pass validation (departments, designations, users, rating scales, categories, stats)
+- Safe delete pattern confirmed: records with linked users → deactivate; records without → permanent delete
+- ESLint: zero errors across entire codebase

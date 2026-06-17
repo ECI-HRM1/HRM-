@@ -15,7 +15,20 @@ export async function GET(
           select: { id: true, name: true, designation: true },
         },
         supervisedEmployees: {
-          select: { id: true, name: true, employeeId: true, designation: true, department: true, isActive: true },
+          select: {
+            id: true,
+            name: true,
+            employeeId: true,
+            designation: true,
+            department: true,
+            isActive: true,
+          },
+        },
+        _count: {
+          select: {
+            appraisals: true,
+            supervisorAppraisals: true,
+          },
         },
       },
     });
@@ -40,6 +53,8 @@ export async function GET(
       isActive: user.isActive,
       lineManager: user.lineManager,
       supervisedEmployees: user.supervisedEmployees,
+      appraisalCount: user._count.appraisals,
+      supervisedAppraisalCount: user._count.supervisorAppraisals,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
@@ -79,6 +94,9 @@ export async function PUT(
         return NextResponse.json({ error: 'Employee ID already in use' }, { status: 409 });
       }
     }
+
+    // Note: Changes to department/designation/lineManagerId only affect future appraisals.
+    // Existing appraisal records store snapshots in AppraisalFormData, so they remain unchanged.
 
     const user = await db.user.update({
       where: { id },
@@ -132,17 +150,37 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const existing = await db.user.findUnique({ where: { id } });
+    const existing = await db.user.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            appraisals: true,
+            supervisorAppraisals: true,
+          },
+        },
+      },
+    });
+
     if (!existing) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const hasAppraisals =
+      existing._count.appraisals > 0 || existing._count.supervisorAppraisals > 0;
+
+    // Always deactivate (safe default) — whether or not they have appraisals
     await db.user.update({
       where: { id },
       data: { isActive: false },
     });
 
-    return NextResponse.json({ message: 'User deactivated successfully' });
+    return NextResponse.json({
+      message: hasAppraisals
+        ? 'User deactivated (has appraisal records)'
+        : 'User deactivated',
+      hasAppraisals,
+    });
   } catch (error) {
     console.error('Delete user error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -1,14 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const includeInactive = searchParams.get('includeInactive') === 'true';
+
     const departments = await db.department.findMany({
-      where: { isActive: true },
+      where: includeInactive ? {} : { isActive: true },
       orderBy: { name: 'asc' },
     });
 
-    return NextResponse.json({ departments });
+    // Since Department model doesn't have direct relations to User/Designation,
+    // compute counts by department name
+    const departmentsWithCounts = await Promise.all(
+      departments.map(async (dept) => {
+        const [userCount, designationCount] = await Promise.all([
+          db.user.count({ where: { department: dept.name, isActive: true } }),
+          db.designation.count({ where: { department: dept.name, isActive: true } }),
+        ]);
+        return {
+          ...dept,
+          employeeCount: userCount,
+          designationCount,
+        };
+      })
+    );
+
+    return NextResponse.json({ departments: departmentsWithCounts });
   } catch (error) {
     console.error('List departments error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

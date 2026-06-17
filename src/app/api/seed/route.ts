@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createDefaultFormData } from '@/lib/constants';
+import { createDefaultFormData, TECHNICAL_SKILLS, LEADERSHIP_SKILLS, MANAGERIAL_SKILLS } from '@/lib/constants';
 
 export async function POST() {
   try {
@@ -13,6 +13,8 @@ export async function POST() {
     await db.user.deleteMany({});
     await db.designation.deleteMany({});
     await db.department.deleteMany({});
+    await db.appraisalCategory.deleteMany({});
+    await db.ratingScale.deleteMany({});
 
     // Create departments
     const departments = await Promise.all([
@@ -54,6 +56,112 @@ export async function POST() {
         data: { title: 'Admin Assistant', requiredExp: '2+ years', requiredEdu: 'Bachelors degree', department: 'Administration' },
       }),
     ]);
+
+    // ── Rating Scales ──
+    const goalsScale = await db.ratingScale.create({
+      data: {
+        name: 'Goals Rating (0-3)',
+        description: 'Rating scale for achievements and goals evaluation',
+        minScore: 0,
+        maxScore: 3,
+        labelsJson: JSON.stringify([
+          { score: 0, label: 'N/A' },
+          { score: 1, label: 'Below Average' },
+          { score: 2, label: 'Meets Expectations' },
+          { score: 3, label: 'Exceeds Expectations' },
+        ]),
+        appliesTo: 'goals',
+        sortOrder: 0,
+      },
+    });
+
+    const competencyScale = await db.ratingScale.create({
+      data: {
+        name: 'Competency Rating (1-5)',
+        description: 'Rating scale for technical, leadership and managerial competencies',
+        minScore: 1,
+        maxScore: 5,
+        labelsJson: JSON.stringify([
+          { score: 1, label: 'Poor' },
+          { score: 2, label: 'Below Average' },
+          { score: 3, label: 'Average' },
+          { score: 4, label: 'Good' },
+          { score: 5, label: 'Excellent' },
+        ]),
+        appliesTo: 'competencies',
+        sortOrder: 1,
+      },
+    });
+
+    const explanationScale = await db.ratingScale.create({
+      data: {
+        name: 'Explanation Rating (0-3)',
+        description: 'Rating scale for notices/explanations severity',
+        minScore: 0,
+        maxScore: 3,
+        labelsJson: JSON.stringify([
+          { score: 0, label: 'N/A' },
+          { score: 1, label: '1 - Minor' },
+          { score: 2, label: '2 - Moderate' },
+          { score: 3, label: '3 - Severe' },
+        ]),
+        appliesTo: 'explanations',
+        sortOrder: 2,
+      },
+    });
+
+    // ── Appraisal Categories (22 competency items) ──
+    const categorySeedData: Array<{
+      name: string;
+      section: string;
+      sortOrder: number;
+      ratingScaleId: string;
+      description?: string;
+    }> = [];
+
+    // 10 Technical Skills
+    TECHNICAL_SKILLS.forEach((name, idx) => {
+      categorySeedData.push({
+        name,
+        section: 'technical_skills',
+        sortOrder: idx,
+        ratingScaleId: competencyScale.id,
+      });
+    });
+
+    // 5 Leadership Skills
+    LEADERSHIP_SKILLS.forEach((name, idx) => {
+      categorySeedData.push({
+        name,
+        section: 'leadership_skills',
+        sortOrder: idx,
+        ratingScaleId: competencyScale.id,
+      });
+    });
+
+    // 7 Managerial Skills
+    MANAGERIAL_SKILLS.forEach((name, idx) => {
+      categorySeedData.push({
+        name,
+        section: 'managerial_skills',
+        sortOrder: idx,
+        ratingScaleId: competencyScale.id,
+      });
+    });
+
+    const categories = await Promise.all(
+      categorySeedData.map((cat) =>
+        db.appraisalCategory.create({
+          data: {
+            name: cat.name,
+            section: cat.section,
+            description: cat.description || '',
+            sortOrder: cat.sortOrder,
+            ratingScaleId: cat.ratingScaleId,
+          },
+        })
+      )
+    );
 
     // Create users
     const admin = await db.user.create({
@@ -356,6 +464,8 @@ export async function POST() {
         departments: departments.length,
         designations: designations.length,
         users: 10, // 1 admin + 1 management + 2 supervisors + 6 employees
+        ratingScales: 3,
+        appraisalCategories: categories.length,
         cycles: 1,
         assignments: assignments.length,
         notifications: notificationData.length,

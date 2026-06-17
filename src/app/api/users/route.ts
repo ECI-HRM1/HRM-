@@ -8,17 +8,22 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role') || undefined;
     const active = searchParams.get('active');
     const search = searchParams.get('search') || undefined;
+    const includeInactive = searchParams.get('includeInactive') === 'true';
 
     const where: Record<string, unknown> = {};
+
+    // By default, only show active users unless includeInactive=true
+    if (!includeInactive) {
+      where.isActive = true;
+    } else if (active !== null && active !== '' && active !== undefined) {
+      where.isActive = active === 'true';
+    }
 
     if (department) {
       where.department = department;
     }
     if (role) {
       where.role = role;
-    }
-    if (active !== null && active !== '' && active !== undefined) {
-      where.isActive = active === 'true';
     }
     if (search) {
       where.OR = [
@@ -33,6 +38,13 @@ export async function GET(request: NextRequest) {
       include: {
         lineManager: {
           select: { id: true, name: true, designation: true },
+        },
+        _count: {
+          select: {
+            appraisals: true,
+            supervisorAppraisals: true,
+            supervisedEmployees: true,
+          },
         },
       },
       orderBy: { name: 'asc' },
@@ -53,6 +65,9 @@ export async function GET(request: NextRequest) {
       role: u.role,
       isActive: u.isActive,
       lineManager: u.lineManager,
+      appraisalCount: u._count.appraisals,
+      supervisedAppraisalCount: u._count.supervisorAppraisals,
+      supervisedEmployeeCount: u._count.supervisedEmployees,
       createdAt: u.createdAt,
     }));
 

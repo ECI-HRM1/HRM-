@@ -1,6 +1,7 @@
 // App View Types
 export type AppView =
   | 'dashboard'
+  | 'master-data'
   | 'cycles'
   | 'cycle-create'
   | 'cycle-detail'
@@ -9,6 +10,8 @@ export type AppView =
   | 'employee-detail'
   | 'departments'
   | 'designations'
+  | 'rating-scales'
+  | 'appraisal-categories'
   | 'appraisal-list'
   | 'appraisal-form'
   | 'appraisal-view'
@@ -188,9 +191,84 @@ export interface EmployeeDetail {
   yearsWithECI: string;
   currentEdu: string;
   lineManagerId: string | null;
-  role: UserRole;
+  role: UserRole | 'hr';
   isActive: boolean;
   lineManager?: { id: string; name: string; designation: string } | null;
+  supervisedEmployees?: { id: string; name: string; employeeId: string; designation: string; department: string; isActive: boolean }[];
+  _count?: { appraisals: number; supervisedAppraisals: number };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Department with linked record counts
+export interface DepartmentDetail {
+  id: string;
+  name: string;
+  isActive: boolean;
+  employeeCount: number;
+  designationCount: number;
+  appraisalCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Designation with linked record counts
+export interface DesignationDetail {
+  id: string;
+  title: string;
+  requiredExp: string;
+  requiredEdu: string;
+  department: string;
+  isActive: boolean;
+  employeeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Rating Scale
+export interface RatingScaleItem {
+  id: string;
+  name: string;
+  description: string;
+  minScore: number;
+  maxScore: number;
+  labels: { score: number; label: string }[];
+  appliesTo: string;
+  sortOrder: number;
+  isActive: boolean;
+  categoryCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Appraisal Category
+export interface AppraisalCategoryItem {
+  id: string;
+  name: string;
+  section: string;
+  description: string;
+  sortOrder: number;
+  ratingScaleId: string | null;
+  ratingScaleName: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Master Data Overview Stats
+export interface MasterDataStats {
+  totalEmployees: number;
+  activeEmployees: number;
+  inactiveEmployees: number;
+  employeesByRole: { role: string; count: number }[];
+  totalDepartments: number;
+  activeDepartments: number;
+  totalDesignations: number;
+  activeDesignations: number;
+  totalRatingScales: number;
+  totalCategories: number;
+  employeesWithoutSupervisor: number;
+  departmentsWithoutEmployees: string[];
 }
 
 export interface AssignmentDetail {
