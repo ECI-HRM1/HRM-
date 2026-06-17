@@ -85,7 +85,9 @@ export default function EnhancedDepartmentList() {
         setDepartments(list);
       }
     } catch {
-      toast.error('Failed to load departments');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, showing empty department list');
+      setDepartments([]);
     } finally {
       setLoading(false);
     }

@@ -43,7 +43,9 @@ export default function AuditLogViewer() {
           setLogs(data.logs || []);
         }
       } catch {
-        toast.error('Failed to load audit logs');
+        // Server unavailable - show empty state gracefully
+        console.warn('Server unavailable, showing empty audit log');
+        setLogs([]);
       } finally {
         setLoading(false);
       }

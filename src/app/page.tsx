@@ -37,6 +37,9 @@ import AppHeader from '@/components/layout/AppHeader';
 // Login view
 import LoginView from '@/components/auth/LoginView';
 
+// Error handling
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
 function DashboardRouter() {
   const { currentUser } = useAppStore();
   const role = currentUser?.role;
@@ -129,9 +132,9 @@ function AppShell() {
 export default function Home() {
   const { isLoggedIn } = useAppStore();
 
-  if (!isLoggedIn) {
-    return <LoginView />;
-  }
-
-  return <AppShell />;
+  return (
+    <ErrorBoundary>
+      {isLoggedIn ? <AppShell /> : <LoginView />}
+    </ErrorBoundary>
+  );
 }

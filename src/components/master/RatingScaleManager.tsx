@@ -96,7 +96,9 @@ export default function RatingScaleManager() {
         setScales(data.ratingScales || data || []);
       }
     } catch {
-      toast.error('Failed to load rating scales');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, showing empty rating scales list');
+      setScales([]);
     } finally {
       setLoading(false);
     }

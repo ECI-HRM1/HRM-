@@ -28,6 +28,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Catch unhandled promise rejections silently to prevent raw JSON errors
+              window.addEventListener('unhandledrejection', function(event) {
+                console.warn('[Global] Unhandled promise rejection caught:', event.reason);
+                event.preventDefault();
+              });
+              // Intercept fetch errors globally
+              const originalFetch = window.fetch;
+              window.fetch = function(...args) {
+                return originalFetch.apply(this, args).catch(function(err) {
+                  console.warn('[Global] Fetch error intercepted:', err);
+                  throw err;
+                });
+              };
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

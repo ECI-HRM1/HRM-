@@ -6,6 +6,7 @@ import AppSidebar from './AppSidebar';
 import AppFooter from './AppFooter';
 import LoginPage from './LoginPage';
 import { cn } from '@/lib/utils';
+import ServiceStatusBanner from '@/components/ServiceStatus';
 
 export default function AppShell() {
   const { isLoggedIn, currentView } = useAppStore();
@@ -24,6 +25,7 @@ export default function AppShell() {
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar />
         <main className="flex-1 flex flex-col overflow-hidden">
+          <ServiceStatusBanner />
           <div className="flex-1 overflow-y-auto eci-scroll p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
               {/* Main content will be rendered here based on currentView */}

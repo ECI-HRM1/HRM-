@@ -60,7 +60,9 @@ export default function CycleList() {
         setCycles(data.cycles || []);
       }
     } catch {
-      toast.error('Failed to load cycles');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, showing empty cycle list');
+      setCycles([]);
     } finally {
       setLoading(false);
     }

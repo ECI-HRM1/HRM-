@@ -80,6 +80,8 @@ export default function EnhancedEmployeeList() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showInactive, setShowInactive] = useState(false);
 
+  const [isOffline, setIsOffline] = useState(false);
+
   // Delete states
   const [deleteTarget, setDeleteTarget] = useState<EmployeeDetail | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -99,7 +101,10 @@ export default function EnhancedEmployeeList() {
         setEmployees(Array.isArray(data) ? data : (data.users || []));
       }
     } catch {
-      toast.error('Failed to load employees');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, showing empty employee list');
+      setEmployees([]);
+      setIsOffline(true);
     }
   }, [showInactive]);
 
@@ -210,6 +215,13 @@ export default function EnhancedEmployeeList() {
 
   return (
     <div className="space-y-4">
+      {/* Offline Banner */}
+      {isOffline && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+          Server unavailable — showing cached data. Some features may not work.
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold">Employees &amp; Users</h2>

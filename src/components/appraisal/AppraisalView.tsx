@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Printer, Share2, CheckCircle2, Loader2, Send } from 'lucide-react';
+import { ArrowLeft, Printer, Share2, CheckCircle2, Loader2, Send, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   AppraisalFormDataFull,
@@ -33,11 +33,13 @@ export default function AppraisalView() {
   const [formData, setFormData] = useState<AppraisalFormDataFull | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!assignmentId) return;
     async function fetchData() {
       try {
+        setError(null);
         const [assignRes, formRes] = await Promise.all([
           fetch(`/api/assignments/${assignmentId}`),
           fetch(`/api/assignments/${assignmentId}/form`),
@@ -45,7 +47,8 @@ export default function AppraisalView() {
         if (assignRes.ok) setAssignment(await assignRes.json());
         if (formRes.ok) setFormData((await formRes.json()).formData || null);
       } catch {
-        toast.error('Failed to load appraisal data');
+        console.warn('Server unavailable, could not load appraisal data');
+        setError('Unable to load appraisal data. The server may be temporarily unavailable.');
       } finally {
         setLoading(false);
       }
@@ -68,6 +71,20 @@ export default function AppraisalView() {
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-64 rounded-xl" />
         <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <AlertTriangle className="h-12 w-12 mx-auto text-amber-500 mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Connection Issue</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button variant="outline" onClick={() => setCurrentView('appraisal-list')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to List
+        </Button>
       </div>
     );
   }

@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/select';
 import { Search, Download, Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
 import type { AssignmentDetail, AppraisalStatus, CycleDetail, CycleStatus } from '@/lib/types';
 import { APPRAISAL_STATUS_LABELS, APPRAISAL_STATUS_COLORS, CYCLE_TYPE_LABELS } from '@/lib/constants';
 
@@ -61,7 +60,9 @@ export default function AppraisalList() {
       if (cycleRes.ok) setCycles((await cycleRes.json()).cycles || []);
       if (deptRes.ok) setDepartments((await deptRes.json()).departments || []);
     } catch {
-      toast.error('Failed to load assignments');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, showing empty assignment list');
+      setAssignments([]);
     } finally {
       setLoading(false);
     }

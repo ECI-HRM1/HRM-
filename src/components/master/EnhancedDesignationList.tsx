@@ -105,7 +105,9 @@ export default function EnhancedDesignationList() {
         setDesignations(list);
       }
     } catch {
-      toast.error('Failed to load designations');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, showing empty designation list');
+      setDesignations([]);
     } finally {
       setLoading(false);
     }

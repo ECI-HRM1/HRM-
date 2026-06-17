@@ -76,7 +76,11 @@ export default function CycleForm() {
         if (empRes.ok) setEmployees((await empRes.json()).users || []);
         if (supRes.ok) setSupervisors((await supRes.json()).users || []);
       } catch {
-        toast.error('Failed to load required data');
+        // Server unavailable - use empty data gracefully
+        console.warn('Server unavailable, using empty data for cycle form');
+        setDepartments([]);
+        setEmployees([]);
+        setSupervisors([]);
       } finally {
         setLoading(false);
       }

@@ -52,7 +52,9 @@ export default function NotificationPanel() {
         setNotifications(items);
       }
     } catch {
-      toast.error('Failed to load notifications');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, showing empty notification list');
+      setLocalNotifications([]);
     } finally {
       setLoading(false);
     }

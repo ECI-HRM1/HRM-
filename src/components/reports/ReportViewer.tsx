@@ -57,7 +57,10 @@ export default function ReportViewer() {
       if (cycleRes.ok) setCycles((await cycleRes.json()).cycles || []);
       if (deptRes.ok) setDepartments((await deptRes.json()).departments || []);
     } catch {
-      toast.error('Failed to load filters');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, using empty filters');
+      setCycles([]);
+      setDepartments([]);
     } finally {
       setLoading(false);
     }

@@ -26,6 +26,10 @@ interface AppState {
   unreadCount: number;
   setUnreadCount: (n: number) => void;
 
+  // Server status
+  serverAvailable: boolean;
+  setServerAvailable: (available: boolean) => void;
+
   // Global loading
   globalLoading: boolean;
   setGlobalLoading: (v: boolean) => void;
@@ -51,6 +55,9 @@ export const useAppStore = create<AppState>((set) => ({
   setNotifications: (n) => set({ notifications: n, unreadCount: n.filter(x => !x.isRead).length }),
   unreadCount: 0,
   setUnreadCount: (n) => set({ unreadCount: n }),
+
+  serverAvailable: true,
+  setServerAvailable: (available) => set({ serverAvailable: available }),
 
   globalLoading: false,
   setGlobalLoading: (v) => set({ globalLoading: v }),

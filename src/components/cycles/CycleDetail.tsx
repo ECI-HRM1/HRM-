@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/table';
 import { ArrowLeft, Download, Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
 import type { AppraisalStatus, AssignmentDetail } from '@/lib/types';
 import { APPRAISAL_STATUS_LABELS, APPRAISAL_STATUS_COLORS, CYCLE_STATUS_LABELS, CYCLE_TYPE_LABELS } from '@/lib/constants';
 
@@ -28,11 +27,13 @@ export default function CycleDetail() {
   const [cycle, setCycle] = useState<any>(null);
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!cycleId) return;
     async function fetchData() {
       try {
+        setError(null);
         const [cycleRes, assignRes] = await Promise.all([
           fetch(`/api/cycles/${cycleId}`),
           fetch(`/api/assignments?cycleId=${cycleId}`),
@@ -43,7 +44,8 @@ export default function CycleDetail() {
           setAssignments(data.assignments || []);
         }
       } catch {
-        toast.error('Failed to load cycle details');
+        console.warn('Server unavailable, could not load cycle details');
+        setError('Cycle not found. The server may be temporarily unavailable.');
       } finally {
         setLoading(false);
       }
@@ -74,9 +76,15 @@ export default function CycleDetail() {
     );
   }
 
-  if (!cycle) {
+  if (!cycle || error) {
     return (
-      <div className="text-center py-12 text-muted-foreground">Cycle not found</div>
+      <div className="text-center py-12">
+        <p className="text-muted-foreground mb-4">{error || 'Cycle not found'}</p>
+        <Button variant="outline" onClick={() => setCurrentView('cycles')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Cycles
+        </Button>
+      </div>
     );
   }
 

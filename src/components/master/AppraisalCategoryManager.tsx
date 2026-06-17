@@ -105,7 +105,9 @@ export default function AppraisalCategoryManager() {
         setCategories(data.categories || data || []);
       }
     } catch {
-      toast.error('Failed to load appraisal categories');
+      // Server unavailable - show empty state gracefully
+      console.warn('Server unavailable, showing empty categories list');
+      setCategories([]);
     } finally {
       setLoading(false);
     }

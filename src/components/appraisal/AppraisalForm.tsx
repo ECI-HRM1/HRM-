@@ -37,7 +37,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, Save, Send, RotateCcw, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Send, RotateCcw, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   AppraisalFormDataFull,
@@ -73,6 +73,7 @@ export default function AppraisalForm() {
   const [returnDialog, setReturnDialog] = useState(false);
   const [returnReason, setReturnReason] = useState('');
   const [returning, setReturning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const userRole = currentUser?.role || 'employee';
   const currentActionBy = assignment?.currentActionBy;
@@ -89,6 +90,7 @@ export default function AppraisalForm() {
     if (!assignmentId) return;
     async function fetchData() {
       try {
+        setError(null);
         const [assignRes, formRes] = await Promise.all([
           fetch(`/api/assignments/${assignmentId}`),
           fetch(`/api/assignments/${assignmentId}/form`),
@@ -101,7 +103,8 @@ export default function AppraisalForm() {
           setFormData(createDefaultFormData());
         }
       } catch {
-        toast.error('Failed to load appraisal data');
+        console.warn('Server unavailable, could not load appraisal form');
+        setError('Unable to load appraisal form. The server may be temporarily unavailable.');
       } finally {
         setLoading(false);
       }
@@ -299,6 +302,20 @@ export default function AppraisalForm() {
         <Skeleton className="h-64 rounded-xl" />
         <Skeleton className="h-64 rounded-xl" />
         <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <AlertTriangle className="h-12 w-12 mx-auto text-amber-500 mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Connection Issue</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button variant="outline" onClick={() => setCurrentView('appraisal-list')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to List
+        </Button>
       </div>
     );
   }
