@@ -1,0 +1,144 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const department = searchParams.get('department') || undefined;
+    const role = searchParams.get('role') || undefined;
+    const active = searchParams.get('active');
+    const search = searchParams.get('search') || undefined;
+
+    const where: Record<string, unknown> = {};
+
+    if (department) {
+      where.department = department;
+    }
+    if (role) {
+      where.role = role;
+    }
+    if (active !== null && active !== '' && active !== undefined) {
+      where.isActive = active === 'true';
+    }
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { email: { contains: search } },
+        { employeeId: { contains: search } },
+      ];
+    }
+
+    const users = await db.user.findMany({
+      where,
+      include: {
+        lineManager: {
+          select: { id: true, name: true, designation: true },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    const safeUsers = users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      employeeId: u.employeeId,
+      designation: u.designation,
+      department: u.department,
+      phone: u.phone,
+      overallExp: u.overallExp,
+      yearsWithECI: u.yearsWithECI,
+      currentEdu: u.currentEdu,
+      lineManagerId: u.lineManagerId,
+      role: u.role,
+      isActive: u.isActive,
+      lineManager: u.lineManager,
+      createdAt: u.createdAt,
+    }));
+
+    return NextResponse.json(safeUsers);
+  } catch (error) {
+    console.error('List users error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const {
+      email,
+      name,
+      employeeId,
+      designation,
+      department,
+      phone,
+      overallExp,
+      yearsWithECI,
+      currentEdu,
+      lineManagerId,
+      role,
+    } = body;
+
+    if (!email || !name || !employeeId || !designation || !department) {
+      return NextResponse.json(
+        { error: 'email, name, employeeId, designation, department are required' },
+        { status: 400 }
+      );
+    }
+
+    const existing = await db.user.findFirst({
+      where: {
+        OR: [{ email }, { employeeId }],
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        { error: 'User with this email or employee ID already exists' },
+        { status: 409 }
+      );
+    }
+
+    const user = await db.user.create({
+      data: {
+        email,
+        name,
+        employeeId,
+        designation,
+        department,
+        phone: phone || '',
+        overallExp: overallExp || '',
+        yearsWithECI: yearsWithECI || '',
+        currentEdu: currentEdu || '',
+        lineManagerId: lineManagerId || null,
+        role: role || 'employee',
+      },
+      include: {
+        lineManager: {
+          select: { id: true, name: true, designation: true },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      employeeId: user.employeeId,
+      designation: user.designation,
+      department: user.department,
+      phone: user.phone,
+      overallExp: user.overallExp,
+      yearsWithECI: user.yearsWithECI,
+      currentEdu: user.currentEdu,
+      lineManagerId: user.lineManagerId,
+      role: user.role,
+      isActive: user.isActive,
+      lineManager: user.lineManager,
+    }, { status: 201 });
+  } catch (error) {
+    console.error('Create user error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
