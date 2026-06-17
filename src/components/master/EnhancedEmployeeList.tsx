@@ -397,19 +397,21 @@ export default function EnhancedEmployeeList() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            <div
+                              role="switch"
+                              aria-checked={emp.isActive}
+                              tabIndex={0}
+                              className="flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent hover:text-accent-foreground cursor-pointer"
                               onClick={() => handleToggleActive(emp)}
-                              disabled={togglingId === emp.id}
+                              onKeyDown={(e) => e.key === 'Enter' && handleToggleActive(emp)}
                               title={emp.isActive ? 'Deactivate' : 'Activate'}
                             >
                               {togglingId === emp.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <Switch className="scale-75" checked={emp.isActive} />
+                                <div className={`w-4 h-4 rounded-full border-2 transition-colors ${emp.isActive ? 'bg-green-500 border-green-500' : 'border-muted-foreground'}`} />
                               )}
-                            </Button>
+                            </div>
                             <Button
                               variant="ghost"
                               size="sm"

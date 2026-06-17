@@ -1,44 +1,52 @@
 'use client';
 
+import { lazy, Suspense } from 'react';
 import { useAppStore } from '@/store/app-store';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-// Dashboard Components
-import AdminDashboard from '@/components/dashboards/AdminDashboard';
-import SupervisorDashboard from '@/components/dashboards/SupervisorDashboard';
-import ManagementDashboard from '@/components/dashboards/ManagementDashboard';
-import EmployeeDashboard from '@/components/dashboards/EmployeeDashboard';
+// Login view - loaded immediately (small, critical)
+import LoginView from '@/components/auth/LoginView';
 
-// Master Data Components (Enhanced)
-import MasterDataOverview from '@/components/master/MasterDataOverview';
-import EnhancedEmployeeList from '@/components/master/EnhancedEmployeeList';
-import EnhancedEmployeeForm from '@/components/master/EnhancedEmployeeForm';
-import EnhancedDepartmentList from '@/components/master/EnhancedDepartmentList';
-import EnhancedDesignationList from '@/components/master/EnhancedDesignationList';
-import RatingScaleManager from '@/components/master/RatingScaleManager';
-import AppraisalCategoryManager from '@/components/master/AppraisalCategoryManager';
-
-// Appraisal Components
-import CycleList from '@/components/cycles/CycleList';
-import CycleForm from '@/components/cycles/CycleForm';
-import CycleDetail from '@/components/cycles/CycleDetail';
-import AppraisalList from '@/components/appraisal/AppraisalList';
-import AppraisalForm from '@/components/appraisal/AppraisalForm';
-import AppraisalView from '@/components/appraisal/AppraisalView';
-
-// Other Components
-import NotificationPanel from '@/components/notifications/NotificationPanel';
-import ReportViewer from '@/components/reports/ReportViewer';
-import AuditLogViewer from '@/components/reports/AuditLogViewer';
-
-// AppShell components
+// Layout components - loaded after login (small)
 import AppSidebar from '@/components/layout/AppSidebar';
 import AppHeader from '@/components/layout/AppHeader';
 
-// Login view
-import LoginView from '@/components/auth/LoginView';
+// Lazy load ALL view components to reduce initial Turbopack compilation
+const AdminDashboard = lazy(() => import('@/components/dashboards/AdminDashboard'));
+const SupervisorDashboard = lazy(() => import('@/components/dashboards/SupervisorDashboard'));
+const ManagementDashboard = lazy(() => import('@/components/dashboards/ManagementDashboard'));
+const EmployeeDashboard = lazy(() => import('@/components/dashboards/EmployeeDashboard'));
 
-// Error handling
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+const MasterDataOverview = lazy(() => import('@/components/master/MasterDataOverview'));
+const EnhancedEmployeeList = lazy(() => import('@/components/master/EnhancedEmployeeList'));
+const EnhancedEmployeeForm = lazy(() => import('@/components/master/EnhancedEmployeeForm'));
+const EnhancedDepartmentList = lazy(() => import('@/components/master/EnhancedDepartmentList'));
+const EnhancedDesignationList = lazy(() => import('@/components/master/EnhancedDesignationList'));
+const RatingScaleManager = lazy(() => import('@/components/master/RatingScaleManager'));
+const AppraisalCategoryManager = lazy(() => import('@/components/master/AppraisalCategoryManager'));
+
+const CycleList = lazy(() => import('@/components/cycles/CycleList'));
+const CycleForm = lazy(() => import('@/components/cycles/CycleForm'));
+const CycleDetail = lazy(() => import('@/components/cycles/CycleDetail'));
+const AppraisalList = lazy(() => import('@/components/appraisal/AppraisalList'));
+const AppraisalForm = lazy(() => import('@/components/appraisal/AppraisalForm'));
+const AppraisalView = lazy(() => import('@/components/appraisal/AppraisalView'));
+
+const NotificationPanel = lazy(() => import('@/components/notifications/NotificationPanel'));
+const ReportViewer = lazy(() => import('@/components/reports/ReportViewer'));
+const AuditLogViewer = lazy(() => import('@/components/reports/AuditLogViewer'));
+
+// Simple loading spinner for lazy-loaded components
+function ViewLoader() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-eci-blue border-t-transparent" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function DashboardRouter() {
   const { currentUser } = useAppStore();
@@ -53,50 +61,56 @@ function DashboardRouter() {
 function ViewRouter() {
   const { currentView } = useAppStore();
 
-  switch (currentView) {
-    case 'dashboard':
-      return <DashboardRouter />;
-    // Master Data
-    case 'master-data':
-      return <MasterDataOverview />;
-    case 'employees':
-      return <EnhancedEmployeeList />;
-    case 'employee-create':
-    case 'employee-detail':
-      return <EnhancedEmployeeForm />;
-    case 'departments':
-      return <EnhancedDepartmentList />;
-    case 'designations':
-      return <EnhancedDesignationList />;
-    case 'rating-scales':
-      return <RatingScaleManager />;
-    case 'appraisal-categories':
-      return <AppraisalCategoryManager />;
-    // Appraisal
-    case 'cycles':
-      return <CycleList />;
-    case 'cycle-create':
-      return <CycleForm />;
-    case 'cycle-detail':
-      return <CycleDetail />;
-    case 'appraisal-list':
-      return <AppraisalList />;
-    case 'appraisal-form':
-      return <AppraisalForm />;
-    case 'appraisal-view':
-      return <AppraisalView />;
-    // Other
-    case 'notifications':
-      return <NotificationPanel />;
-    case 'reports':
-      return <ReportViewer />;
-    case 'audit-logs':
-      return <AuditLogViewer />;
-    case 'settings':
-      return <SettingsPlaceholder />;
-    default:
-      return <DashboardRouter />;
-  }
+  return (
+    <Suspense fallback={<ViewLoader />}>
+      {(() => {
+        switch (currentView) {
+          case 'dashboard':
+            return <DashboardRouter />;
+          // Master Data
+          case 'master-data':
+            return <MasterDataOverview />;
+          case 'employees':
+            return <EnhancedEmployeeList />;
+          case 'employee-create':
+          case 'employee-detail':
+            return <EnhancedEmployeeForm />;
+          case 'departments':
+            return <EnhancedDepartmentList />;
+          case 'designations':
+            return <EnhancedDesignationList />;
+          case 'rating-scales':
+            return <RatingScaleManager />;
+          case 'appraisal-categories':
+            return <AppraisalCategoryManager />;
+          // Appraisal
+          case 'cycles':
+            return <CycleList />;
+          case 'cycle-create':
+            return <CycleForm />;
+          case 'cycle-detail':
+            return <CycleDetail />;
+          case 'appraisal-list':
+            return <AppraisalList />;
+          case 'appraisal-form':
+            return <AppraisalForm />;
+          case 'appraisal-view':
+            return <AppraisalView />;
+          // Other
+          case 'notifications':
+            return <NotificationPanel />;
+          case 'reports':
+            return <ReportViewer />;
+          case 'audit-logs':
+            return <AuditLogViewer />;
+          case 'settings':
+            return <SettingsPlaceholder />;
+          default:
+            return <DashboardRouter />;
+        }
+      })()}
+    </Suspense>
+  );
 }
 
 function SettingsPlaceholder() {
