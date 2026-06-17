@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -27,6 +28,8 @@ import { format } from 'date-fns';
 import type { AssignmentDetail, AppraisalStatus, CycleDetail, CycleStatus } from '@/lib/types';
 import { APPRAISAL_STATUS_LABELS, APPRAISAL_STATUS_COLORS, CYCLE_TYPE_LABELS } from '@/lib/constants';
 
+type TabValue = 'my' | 'team';
+
 export default function AppraisalList() {
   const { currentUser, setCurrentView, setViewParams } = useAppStore();
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
@@ -38,17 +41,36 @@ export default function AppraisalList() {
   const [cycleFilter, setCycleFilter] = useState('all');
   const [deptFilter, setDeptFilter] = useState('all');
 
+  // Dual-role tab state
+  const isDualRole = currentUser?.isSupervisor || currentUser?.role === 'supervisor';
+  const isManagement = currentUser?.role === 'management' || currentUser?.role === 'admin' || currentUser?.role === 'hr';
+  const [activeTab, setActiveTab] = useState<TabValue>('my');
+
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [activeTab]);
 
   async function fetchData() {
     try {
       const role = currentUser?.role || 'employee';
       const params = new URLSearchParams();
-      if (currentUser?.role === 'supervisor') params.set('supervisorId', currentUser.id);
-      if (currentUser?.role === 'employee') params.set('employeeId', currentUser.id);
-      if (currentUser?.role === 'management') params.set('managementView', 'true');
+
+      if (isManagement) {
+        // Management/admin/HR see all — no tabs needed
+        if (currentUser?.role === 'supervisor') params.set('supervisorId', currentUser.id);
+        if (currentUser?.role === 'management') params.set('managementView', 'true');
+      } else if (isDualRole) {
+        // Dual-role: fetch based on active tab
+        if (activeTab === 'team') {
+          params.set('supervisorId', currentUser!.id);
+        } else {
+          params.set('employeeId', currentUser!.id);
+        }
+      } else if (role === 'employee') {
+        params.set('employeeId', currentUser!.id);
+      } else if (role === 'supervisor') {
+        params.set('supervisorId', currentUser!.id);
+      }
 
       const [assignRes, cycleRes, deptRes] = await Promise.all([
         fetch(`/api/assignments?${params.toString()}`),
@@ -90,6 +112,8 @@ export default function AppraisalList() {
     );
   }
 
+  const showTabs = isDualRole && !isManagement;
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -100,6 +124,23 @@ export default function AppraisalList() {
           Export
         </Button>
       </div>
+
+      {/* Dual-role Tabs */}
+      {showTabs && (
+        <Tabs value={activeTab} onValueChange={(v) => {
+          setActiveTab(v as TabValue);
+          // Reset filters when switching tabs
+          setSearchQuery('');
+          setStatusFilter('all');
+          setCycleFilter('all');
+          setDeptFilter('all');
+        }}>
+          <TabsList>
+            <TabsTrigger value="my">My Appraisals</TabsTrigger>
+            <TabsTrigger value="team">Team Appraisals</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">

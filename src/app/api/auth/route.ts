@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       currentEdu: user.currentEdu,
       role: user.role,
       isActive: user.isActive,
+      isSupervisor: user.isSupervisor,
       lineManagerId: user.lineManagerId,
       lineManager: user.lineManager,
     });

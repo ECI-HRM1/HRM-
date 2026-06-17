@@ -87,12 +87,21 @@ export async function POST(
       include: {
         employee: { select: { id: true, name: true } },
         supervisor: { select: { id: true, name: true } },
+        escalatedSupervisor: { select: { id: true, name: true } },
         cycle: { select: { id: true, name: true } },
       },
     });
 
     if (!assignment) {
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+    }
+
+    // Self-review guard: prevent supervisor from submitting their own review
+    if (action === 'supervisor_submit' && assignment.supervisorId === assignment.employeeId) {
+      return NextResponse.json(
+        { error: 'Self-review is not allowed' },
+        { status: 403 }
+      );
     }
 
     // Validate current status
@@ -160,10 +169,15 @@ export async function POST(
     // Create notifications for the next person in workflow
     const notificationsToCreate: { userId: string; type: string; title: string; message: string; actionRequired: boolean; link: string; assignmentId: string }[] = [];
 
+    // Determine the correct reviewer to notify for supervisor-level actions
+    const reviewerId = assignment.escalatedSupervisorId || assignment.supervisorId;
+    const reviewerName = assignment.escalatedSupervisor?.name || assignment.supervisor.name;
+
     switch (action) {
       case 'employee_submit':
+        // Notify the escalated supervisor if set, otherwise the regular supervisor
         notificationsToCreate.push({
-          userId: assignment.supervisorId,
+          userId: reviewerId,
           assignmentId: id,
           type: 'employee_submitted',
           title: 'Appraisal Submitted by Employee',
@@ -185,7 +199,7 @@ export async function POST(
             assignmentId: id,
             type: 'supervisor_submitted',
             title: 'Appraisal Ready for HR Review',
-            message: `${assignment.supervisor.name} has completed the supervisor review for ${assignment.employee.name}'s appraisal in "${assignment.cycle.name}".`,
+            message: `${reviewerName} has completed the supervisor review for ${assignment.employee.name}'s appraisal in "${assignment.cycle.name}".`,
             actionRequired: true,
             link: `/appraisal/${id}`,
           });
@@ -271,9 +285,9 @@ export async function POST(
           actionRequired: true,
           link: `/appraisal/${id}`,
         });
-        // Also notify supervisor
+        // Also notify supervisor (or escalated supervisor if set)
         notificationsToCreate.push({
-          userId: assignment.supervisorId,
+          userId: reviewerId,
           assignmentId: id,
           type: 'reminder',
           title: 'Appraisal Shared with Employee',
@@ -287,10 +301,6 @@ export async function POST(
     if (notificationsToCreate.length > 0) {
       await db.notification.createMany({ data: notificationsToCreate });
     }
-
-    // If approved, also create a notification to share with the employee
-    // (this will be done when HR explicitly shares)
-    // Also update the supervisor if management approved (for visibility)
 
     return NextResponse.json({
       message: `Action '${action}' completed successfully`,

@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
       currentEdu: u.currentEdu,
       lineManagerId: u.lineManagerId,
       role: u.role,
+      isSupervisor: u.isSupervisor,
       isActive: u.isActive,
       lineManager: u.lineManager,
       appraisalCount: u._count.appraisals,
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
       currentEdu,
       lineManagerId,
       role,
+      isSupervisor,
     } = body;
 
     if (!email || !name || !employeeId || !designation || !department) {
@@ -128,6 +130,7 @@ export async function POST(request: NextRequest) {
         currentEdu: currentEdu || '',
         lineManagerId: lineManagerId || null,
         role: role || 'employee',
+        isSupervisor: isSupervisor || false,
       },
       include: {
         lineManager: {
@@ -149,6 +152,7 @@ export async function POST(request: NextRequest) {
       currentEdu: user.currentEdu,
       lineManagerId: user.lineManagerId,
       role: user.role,
+      isSupervisor: user.isSupervisor,
       isActive: user.isActive,
       lineManager: user.lineManager,
     }, { status: 201 });

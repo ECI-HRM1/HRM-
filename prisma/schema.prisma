@@ -21,7 +21,8 @@ model User {
   currentEdu     String   @default("")
   lineManagerId  String?
   lineManager    User?    @relation("LineManager", fields: [lineManagerId], references: [id])
-  role           String   @default("employee") // admin, supervisor, management, employee
+  role           String   @default("employee") // admin, supervisor, management, employee, hr
+  isSupervisor   Boolean  @default(false) // true if this employee can supervise others (dual-role)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -34,6 +35,7 @@ model User {
   auditLogs    AuditLog[]
 
   supervisorAppraisals AppraisalAssignment[] @relation("SupervisorAppraisals")
+  escalatedAppraisals AppraisalAssignment[] @relation("EscalatedSupervisor")
 }
 
 model Department {
@@ -83,6 +85,8 @@ model AppraisalAssignment {
   employee        User     @relation(fields: [employeeId], references: [id])
   supervisorId    String
   supervisor      User     @relation("SupervisorAppraisals", fields: [supervisorId], references: [id])
+  escalatedSupervisorId String? // Used when supervisor === employee to prevent self-review
+  escalatedSupervisor   User?   @relation("EscalatedSupervisor", fields: [escalatedSupervisorId], references: [id])
   status          String   @default("assigned_to_employee")
   // assigned_to_employee, submitted_by_employee, under_supervisor_review, 
   // submitted_by_supervisor, under_hr_review, submitted_to_management,

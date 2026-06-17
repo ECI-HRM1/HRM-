@@ -1,0 +1,1117 @@
+     1→'use client';
+     2→
+     3→import { useEffect, useState, useCallback, useMemo } from 'react';
+     4→import { useAppStore } from '@/store/app-store';
+     5→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     6→import { Button } from '@/components/ui/button';
+     7→import { Input } from '@/components/ui/input';
+     8→import { Textarea } from '@/components/ui/textarea';
+     9→import { Label } from '@/components/ui/label';
+    10→import { Checkbox } from '@/components/ui/checkbox';
+    11→import { Badge } from '@/components/ui/badge';
+    12→import { Skeleton } from '@/components/ui/skeleton';
+    13→import { Separator } from '@/components/ui/separator';
+    14→import {
+    15→  Select,
+    16→  SelectContent,
+    17→  SelectItem,
+    18→  SelectTrigger,
+    19→  SelectValue,
+    20→} from '@/components/ui/select';
+    21→import {
+    22→  AlertDialog,
+    23→  AlertDialogAction,
+    24→  AlertDialogCancel,
+    25→  AlertDialogContent,
+    26→  AlertDialogDescription,
+    27→  AlertDialogFooter,
+    28→  AlertDialogHeader,
+    29→  AlertDialogTitle,
+    30→} from '@/components/ui/alert-dialog';
+    31→import {
+    32→  Dialog,
+    33→  DialogContent,
+    34→  DialogDescription,
+    35→  DialogFooter,
+    36→  DialogHeader,
+    37→  DialogTitle,
+    38→} from '@/components/ui/dialog';
+    39→import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+    40→import { ArrowLeft, Save, Send, RotateCcw, Loader2, AlertTriangle } from 'lucide-react';
+    41→import { toast } from 'sonner';
+    42→import type {
+    43→  AppraisalFormDataFull,
+    44→  AssignmentDetail,
+    45→  AchievementGoalItem,
+    46→  CompetencyItem,
+    47→  ExplanationItem,
+    48→  FutureGoalItem,
+    49→  RemarksData,
+    50→  AppraisalStatus,
+    51→} from '@/lib/types';
+    52→import {
+    53→  GOAL_RATING_OPTIONS,
+    54→  COMPETENCY_RATING_OPTIONS,
+    55→  TECHNICAL_SKILLS,
+    56→  LEADERSHIP_SKILLS,
+    57→  MANAGERIAL_SKILLS,
+    58→  SECTION_DESCRIPTIONS,
+    59→  createDefaultFormData,
+    60→  calculateAppraisalScores,
+    61→} from '@/lib/constants';
+    62→import { APPRAISAL_STATUS_LABELS, APPRAISAL_STATUS_COLORS } from '@/lib/constants';
+    63→
+    64→export default function AppraisalForm() {
+    65→  const { viewParams, currentUser, setCurrentView } = useAppStore();
+    66→  const assignmentId = viewParams?.id;
+    67→
+    68→  const [assignment, setAssignment] = useState<AssignmentDetail | null>(null);
+    69→  const [formData, setFormData] = useState<AppraisalFormDataFull | null>(null);
+    70→  const [loading, setLoading] = useState(true);
+    71→  const [saving, setSaving] = useState(false);
+    72→  const [submitting, setSubmitting] = useState(false);
+    73→  const [returnDialog, setReturnDialog] = useState(false);
+    74→  const [returnReason, setReturnReason] = useState('');
+    75→  const [returning, setReturning] = useState(false);
+    76→  const [error, setError] = useState<string | null>(null);
+    77→
+    78→  const userRole = currentUser?.role || 'employee';
+    79→  const currentActionBy = assignment?.currentActionBy;
+    80→
+    81→  // Can the user edit?
+    82→  const canEditEmployee = userRole === 'employee' && currentActionBy === 'employee';
+    83→  const canEditSupervisor = userRole === 'supervisor' && (currentActionBy === 'supervisor' || currentActionBy === 'employee');
+    84→  const canEditHR = (userRole === 'admin' || userRole === 'hr') && currentActionBy === 'hr';
+    85→  const canEditManagement = userRole === 'management' && (currentActionBy === 'management');
+    86→  const canSubmit = currentActionBy === userRole;
+    87→
+    88→  // Fetch assignment and form data
+    89→  useEffect(() => {
+    90→    if (!assignmentId) return;
+    91→    async function fetchData() {
+    92→      try {
+    93→        setError(null);
+    94→        const [assignRes, formRes] = await Promise.all([
+    95→          fetch(`/api/assignments/${assignmentId}`),
+    96→          fetch(`/api/assignments/${assignmentId}/form`),
+    97→        ]);
+    98→        if (assignRes.ok) setAssignment(await assignRes.json());
+    99→        if (formRes.ok) {
+   100→          const data = await formRes.json();
+   101→          setFormData(data.formData || createDefaultFormData());
+   102→        } else {
+   103→          setFormData(createDefaultFormData());
+   104→        }
+   105→      } catch {
+   106→        console.warn('Server unavailable, could not load appraisal form');
+   107→        setError('Unable to load appraisal form. The server may be temporarily unavailable.');
+   108→      } finally {
+   109→        setLoading(false);
+   110→      }
+   111→    }
+   112→    fetchData();
+   113→  }, [assignmentId]);
+   114→
+   115→  // Update form helpers
+   116→  const updateAchievement = useCallback(
+   117→    (section: 'achievements' | 'goals', index: number, field: keyof AchievementGoalItem, value: string | number) => {
+   118→      setFormData((prev) => {
+   119→        if (!prev) return prev;
+   120→        const updated = [...prev[section]];
+   121→        updated[index] = { ...updated[index], [field]: value };
+   122→        return { ...prev, [section]: updated };
+   123→      });
+   124→    },
+   125→    []
+   126→  );
+   127→
+   128→  const updateSkill = useCallback(
+   129→    (section: 'technicalSkills' | 'leadershipSkills' | 'managerialSkills', index: number, field: 'employeeRating' | 'supervisorRating', value: number | 'NA') => {
+   130→      setFormData((prev) => {
+   131→        if (!prev) return prev;
+   132→        const updated = [...prev[section]];
+   133→        updated[index] = { ...updated[index], [field]: value };
+   134→        return { ...prev, [section]: updated };
+   135→      });
+   136→    },
+   137→    []
+   138→  );
+   139→
+   140→  const updateExplanation = useCallback(
+   141→    (index: number, field: keyof ExplanationItem, value: string | boolean | number) => {
+   142→      setFormData((prev) => {
+   143→        if (!prev) return prev;
+   144→        const updated = [...prev.explanations];
+   145→        updated[index] = { ...updated[index], [field]: value };
+   146→        return { ...prev, explanations: updated };
+   147→      });
+   148→    },
+   149→    []
+   150→  );
+   151→
+   152→  const updateGoal = useCallback(
+   153→    (index: number, field: keyof FutureGoalItem, value: string | boolean | [boolean, boolean, boolean, boolean], quarterIdx?: number) => {
+   154→      setFormData((prev) => {
+   155→        if (!prev) return prev;
+   156→        const updated = [...prev.futureGoals];
+   157→        if (field === 'quarters' && quarterIdx !== undefined) {
+   158→          const newQuarters = [...updated[index].quarters] as [boolean, boolean, boolean, boolean];
+   159→          newQuarters[quarterIdx] = value as boolean;
+   160→          updated[index] = { ...updated[index], quarters: newQuarters };
+   161→        } else {
+   162→          updated[index] = { ...updated[index], [field]: value };
+   163→        }
+   164→        return { ...prev, futureGoals: updated };
+   165→      });
+   166→    },
+   167→    []
+   168→  );
+   169→
+   170→  const updateRemarks = useCallback(
+   171→    (section: 'hr' | 'supervisor', field: string, value: boolean | string | null) => {
+   172→      setFormData((prev) => {
+   173→        if (!prev) return prev;
+   174→        const updated = { ...prev.remarks };
+   175→        if (section === 'hr') {
+   176→          (updated as any)[`hr${field}`] = value;
+   177→        } else {
+   178→          (updated as any)[`supervisor${field}`] = value;
+   179→        }
+   180→        return { ...prev, remarks: updated as RemarksData };
+   181→      });
+   182→    },
+   183→    []
+   184→  );
+   185→
+   186→  // Calculate scores
+   187→  const employeeScores = useMemo(
+   188→    () => (formData ? calculateAppraisalScores(formData, 'employee') : null),
+   189→    [formData]
+   190→  );
+   191→  const supervisorScores = useMemo(
+   192→    () => (formData ? calculateAppraisalScores(formData, 'supervisor') : null),
+   193→    [formData]
+   194→  );
+   195→
+   196→  // Save draft
+   197→  const handleSave = async () => {
+   198→    if (!assignmentId || !formData) return;
+   199→    setSaving(true);
+   200→    try {
+   201→      const res = await fetch(`/api/assignments/${assignmentId}/form`, {
+   202→        method: 'PUT',
+   203→        headers: { 'Content-Type': 'application/json' },
+   204→        body: JSON.stringify(formData),
+   205→      });
+   206→      if (res.ok) {
+   207→        toast.success('Draft saved successfully');
+   208→      } else {
+   209→        const data = await res.json();
+   210→        toast.error(data.error || 'Failed to save');
+   211→      }
+   212→    } catch {
+   213→      toast.error('Failed to save');
+   214→    } finally {
+   215→      setSaving(false);
+   216→    }
+   217→  };
+   218→
+   219→  // Determine the workflow action based on current user role
+   220→  const getSubmitAction = (): string => {
+   221→    if (userRole === 'employee') return 'employee_submit';
+   222→    if (userRole === 'supervisor') return 'supervisor_submit';
+   223→    if (userRole === 'admin') return 'hr_submit';
+   224→    if (userRole === 'management') return 'management_approve';
+   225→    return 'employee_submit';
+   226→  };
+   227→
+   228→  // Submit
+   229→  const handleSubmit = async () => {
+   230→    if (!assignmentId || !formData) return;
+   231→
+   232→    // Validation
+   233→    if (canEditEmployee) {
+   234→      const filledGoals = formData.futureGoals.filter((g) => g.description.trim() !== '');
+   235→      if (filledGoals.length < 3) {
+   236→        toast.error('Minimum 3 goals are required in Section 6');
+   237→        return;
+   238→      }
+   239→    }
+   240→
+   241→    setSubmitting(true);
+   242→    try {
+   243→      // Save form data first
+   244→      await fetch(`/api/assignments/${assignmentId}/form`, {
+   245→        method: 'PUT',
+   246→        headers: { 'Content-Type': 'application/json' },
+   247→        body: JSON.stringify(formData),
+   248→      });
+   249→
+   250→      const action = getSubmitAction();
+   251→      const res = await fetch(`/api/assignments/${assignmentId}/submit`, {
+   252→        method: 'POST',
+   253→        headers: { 'Content-Type': 'application/json' },
+   254→        body: JSON.stringify({ action }),
+   255→      });
+   256→      if (res.ok) {
+   257→        toast.success('Appraisal submitted successfully');
+   258→        setCurrentView('appraisal-list');
+   259→      } else {
+   260→        const data = await res.json();
+   261→        toast.error(data.error || 'Failed to submit');
+   262→      }
+   263→    } catch {
+   264→      toast.error('Failed to submit');
+   265→    } finally {
+   266→      setSubmitting(false);
+   267→    }
+   268→  };
+   269→
+   270→  // Return for correction
+   271→  const handleReturn = async () => {
+   272→    if (!assignmentId || !returnReason.trim()) {
+   273→      toast.error('Please provide a reason for returning');
+   274→      return;
+   275→    }
+   276→    setReturning(true);
+   277→    try {
+   278→      const res = await fetch(`/api/assignments/${assignmentId}/submit`, {
+   279→        method: 'POST',
+   280→        headers: { 'Content-Type': 'application/json' },
+   281→        body: JSON.stringify({ action: 'management_return', returnReason }),
+   282→      });
+   283→      if (res.ok) {
+   284→        toast.success('Appraisal returned for correction');
+   285→        setCurrentView('appraisal-list');
+   286→      } else {
+   287→        const data = await res.json();
+   288→        toast.error(data.error || 'Failed to return');
+   289→      }
+   290→    } catch {
+   291→      toast.error('Failed to return');
+   292→    } finally {
+   293→      setReturning(false);
+   294→      setReturnDialog(false);
+   295→    }
+   296→  };
+   297→
+   298→  if (loading) {
+   299→    return (
+   300→      <div className="space-y-4">
+   301→        <Skeleton className="h-10 w-64" />
+   302→        <Skeleton className="h-64 rounded-xl" />
+   303→        <Skeleton className="h-64 rounded-xl" />
+   304→        <Skeleton className="h-64 rounded-xl" />
+   305→      </div>
+   306→    );
+   307→  }
+   308→
+   309→  if (error) {
+   310→    return (
+   311→      <div className="text-center py-12">
+   312→        <AlertTriangle className="h-12 w-12 mx-auto text-amber-500 mb-4" />
+   313→        <h3 className="text-lg font-semibold mb-2">Connection Issue</h3>
+   314→        <p className="text-muted-foreground mb-4">{error}</p>
+   315→        <Button variant="outline" onClick={() => setCurrentView('appraisal-list')}>
+   316→          <ArrowLeft className="h-4 w-4 mr-2" />
+   317→          Back to List
+   318→        </Button>
+   319→      </div>
+   320→    );
+   321→  }
+   322→
+   323→  if (!assignment || !formData) {
+   324→    return <div className="text-center py-12 text-muted-foreground">Assignment not found</div>;
+   325→  }
+   326→
+   327→  const isReadOnly = !canEditEmployee && !canEditSupervisor && !canEditHR && !canEditManagement;
+   328→
+   329→  // Section header component
+   330→  function SectionHeader({ number, title }: { number: number; title: string }) {
+   331→    return (
+   332→      <div className="eci-gradient-header text-white px-4 py-3 rounded-t-xl">
+   333→        <h3 className="font-semibold text-sm">
+   334→          Section {number}: {title}
+   335→        </h3>
+   336→      </div>
+   337→    );
+   338→  }
+   339→
+   340→  // Rating select for Section 2
+   341→  function GoalRatingSelect({
+   342→    value,
+   343→    onChange,
+   344→    disabled,
+   345→  }: {
+   346→    value: number | 'NA';
+   347→    onChange: (val: number | 'NA') => void;
+   348→    disabled: boolean;
+   349→  }) {
+   350→    return (
+   351→      <Select value={String(value)} onValueChange={(v) => onChange(v === 'NA' ? 'NA' : Number(v))} disabled={disabled}>
+   352→        <SelectTrigger className="w-28 h-8 text-xs">
+   353→          <SelectValue />
+   354→        </SelectTrigger>
+   355→        <SelectContent>
+   356→          {GOAL_RATING_OPTIONS.map((opt) => (
+   357→            <SelectItem key={opt.value} value={String(opt.value)}>
+   358→              {opt.value} - {opt.label}
+   359→            </SelectItem>
+   360→          ))}
+   361→          <SelectItem value="NA">NA</SelectItem>
+   362→        </SelectContent>
+   363→      </Select>
+   364→    );
+   365→  }
+   366→
+   367→  // Rating select for Section 3
+   368→  function CompetencyRatingSelect({
+   369→    value,
+   370→    onChange,
+   371→    disabled,
+   372→  }: {
+   373→    value: number | 'NA';
+   374→    onChange: (val: number | 'NA') => void;
+   375→    disabled: boolean;
+   376→  }) {
+   377→    return (
+   378→      <Select value={String(value)} onValueChange={(v) => onChange(v === 'NA' ? 'NA' : Number(v))} disabled={disabled}>
+   379→        <SelectTrigger className="w-28 h-8 text-xs">
+   380→          <SelectValue />
+   381→        </SelectTrigger>
+   382→        <SelectContent>
+   383→          {COMPETENCY_RATING_OPTIONS.map((opt) => (
+   384→            <SelectItem key={String(opt.value)} value={String(opt.value)}>
+   385→              {opt.value} - {opt.label}
+   386→            </SelectItem>
+   387→          ))}
+   388→        </SelectContent>
+   389→      </Select>
+   390→    );
+   391→  }
+   392→
+   393→  return (
+   394→    <div className="space-y-6">
+   395→      {/* Header */}
+   396→      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+   397→        <div className="flex items-center gap-4">
+   398→          <Button variant="ghost" size="sm" onClick={() => setCurrentView('appraisal-list')}>
+   399→            <ArrowLeft className="h-4 w-4 mr-2" />
+   400→            Back
+   401→          </Button>
+   402→          <div>
+   403→            <h2 className="text-xl font-bold">Performance Appraisal Form</h2>
+   404→            <div className="flex items-center gap-3 mt-1">
+   405→              <span className="text-sm text-muted-foreground">
+   406→                {assignment.employee?.name} · {assignment.cycle?.name}
+   407→              </span>
+   408→              <Badge className={APPRAISAL_STATUS_COLORS[assignment.status] || ''}>
+   409→                {APPRAISAL_STATUS_LABELS[assignment.status] || assignment.status}
+   410→              </Badge>
+   411→            </div>
+   412→          </div>
+   413→        </div>
+   414→        <div className="flex items-center gap-2 no-print">
+   415→          {canSubmit && (
+   416→            <Button className="eci-btn-primary" onClick={handleSubmit} disabled={submitting}>
+   417→              {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+   418→              Submit
+   419→            </Button>
+   420→          )}
+   421→          {canEditManagement && (
+   422→            <Button variant="outline" className="text-amber-600 border-amber-300 hover:bg-amber-50" onClick={() => setReturnDialog(true)}>
+   423→              <RotateCcw className="h-4 w-4 mr-2" />
+   424→              Return for Correction
+   425→            </Button>
+   426→          )}
+   427→          <Button variant="outline" onClick={handleSave} disabled={saving}>
+   428→            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+   429→            Save Draft
+   430→          </Button>
+   431→        </div>
+   432→      </div>
+   433→
+   434→      {/* Section 1: Basic Information */}
+   435→      <Card className="eci-card overflow-hidden">
+   436→        <SectionHeader number={1} title="Basic Information" />
+   437→        <CardContent className="p-4">
+   438→          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
+   439→            {[
+   440→              ['Employee ID', formData.employeeId],
+   441→              ['Name', formData.employeeName],
+   442→              ['Designation', formData.designation],
+   443→              ['Overall Experience', formData.overallExp],
+   444→              ['Years with ECI', formData.yearsWithECI],
+   445→              ['Current Education', formData.currentEdu],
+   446→              ['Required Experience', formData.requiredExp],
+   447→              ['Required Education', formData.requiredEdu],
+   448→              ['Department', formData.department],
+   449→              ['Appraisal Period', formData.appraisalPeriod],
+   450→              ['Line Manager Name', formData.lineManagerName],
+   451→              ['Line Manager Designation', formData.lineManagerDesignation],
+   452→            ].map(([label, value]) => (
+   453→              <div key={label as string} className="bg-muted/30 p-2 rounded">
+   454→                <p className="text-xs text-muted-foreground">{label as string}</p>
+   455→                <p className="font-medium">{value || '-'}</p>
+   456→              </div>
+   457→            ))}
+   458→          </div>
+   459→        </CardContent>
+   460→      </Card>
+   461→
+   462→      {/* Section 2: Key Accomplishments and Goals */}
+   463→      <Card className="eci-card overflow-hidden">
+   464→        <SectionHeader number={2} title="Key Accomplishments and Goals of " />
+   465→        <CardContent className="p-4 space-y-4">
+   466→          <p className="text-sm text-muted-foreground bg-amber-50 p-3 rounded-lg border border-amber-200">
+   467→            {SECTION_DESCRIPTIONS.accomplishments}
+   468→          </p>
+   469→          <p className="text-xs text-muted-foreground">
+   470→            Rating: 0 = No Achievement, 1 = Partial, 2 = Substantial, 3 = Full Achievement
+   471→          </p>
+   472→
+   473→          {/* Achievements */}
+   474→          <div>
+   475→            <h4 className="font-semibold text-sm mb-2">Achievements</h4>
+   476→            <div className="overflow-x-auto">
+   477→              <table className="w-full text-sm border-collapse">
+   478→                <thead>
+   479→                  <tr className="border-b">
+   480→                    <th className="text-left p-2 min-w-48">#</th>
+   481→                    <th className="text-left p-2 min-w-48">Description</th>
+   482→                    <th className="text-center p-2 w-32">Employee Rating</th>
+   483→                    <th className="text-center p-2 w-32">Supervisor Rating</th>
+   484→                  </tr>
+   485→                </thead>
+   486→                <tbody>
+   487→                  {formData.achievements.map((item, idx) => (
+   488→                    <tr key={idx} className="border-b last:border-0">
+   489→                      <td className="p-2 text-muted-foreground">{idx + 1}</td>
+   490→                      <td className="p-2">
+   491→                        <Textarea
+   492→                          value={item.description}
+   493→                          onChange={(e) => updateAchievement('achievements', idx, 'description', e.target.value)}
+   494→                          disabled={!canEditEmployee}
+   495→                          placeholder="Describe achievement..."
+   496→                          className="min-h-16 text-sm"
+   497→                        />
+   498→                      </td>
+   499→                      <td className="p-2">
+   500→                        <GoalRatingSelect
+   501→                          value={item.employeeRating}
+   502→                          onChange={(v) => updateAchievement('achievements', idx, 'employeeRating', v)}
+   503→                          disabled={!canEditEmployee}
+   504→                        />
+   505→                      </td>
+   506→                      <td className="p-2">
+   507→                        <GoalRatingSelect
+   508→                          value={item.supervisorRating}
+   509→                          onChange={(v) => updateAchievement('achievements', idx, 'supervisorRating', v)}
+   510→                          disabled={!canEditSupervisor}
+   511→                        />
+   512→                      </td>
+   513→                    </tr>
+   514→                  ))}
+   515→                  <tr className="bg-muted/20 font-semibold">
+   516→                    <td colSpan={2} className="p-2 text-right">Sub-Total (Achievements):</td>
+   517→                    <td className="p-2 text-center">
+   518→                      {formData.achievements.reduce((s, i) => s + (i.employeeRating === 'NA' ? 0 : Number(i.employeeRating)), 0)} /{' '}
+   519→                      {(formData.achievements.length - formData.achievements.filter((i) => i.employeeRating === 'NA').length) * 3}
+   520→                    </td>
+   521→                    <td className="p-2 text-center">
+   522→                      {formData.achievements.reduce((s, i) => s + (i.supervisorRating === 'NA' ? 0 : Number(i.supervisorRating)), 0)} /{' '}
+   523→                      {(formData.achievements.length - formData.achievements.filter((i) => i.supervisorRating === 'NA').length) * 3}
+   524→                    </td>
+   525→                  </tr>
+   526→                </tbody>
+   527→              </table>
+   528→            </div>
+   529→          </div>
+   530→
+   531→          <Separator />
+   532→
+   533→          {/* Goals */}
+   534→          <div>
+   535→            <h4 className="font-semibold text-sm mb-2">Goals</h4>
+   536→            <div className="overflow-x-auto">
+   537→              <table className="w-full text-sm border-collapse">
+   538→                <thead>
+   539→                  <tr className="border-b">
+   540→                    <th className="text-left p-2 min-w-48">#</th>
+   541→                    <th className="text-left p-2 min-w-48">Description</th>
+   542→                    <th className="text-center p-2 w-32">Employee Rating</th>
+   543→                    <th className="text-center p-2 w-32">Supervisor Rating</th>
+   544→                  </tr>
+   545→                </thead>
+   546→                <tbody>
+   547→                  {formData.goals.map((item, idx) => (
+   548→                    <tr key={idx} className="border-b last:border-0">
+   549→                      <td className="p-2 text-muted-foreground">{idx + 1}</td>
+   550→                      <td className="p-2">
+   551→                        <Textarea
+   552→                          value={item.description}
+   553→                          onChange={(e) => updateAchievement('goals', idx, 'description', e.target.value)}
+   554→                          disabled={!canEditEmployee}
+   555→                          placeholder="Describe goal..."
+   556→                          className="min-h-16 text-sm"
+   557→                        />
+   558→                      </td>
+   559→                      <td className="p-2">
+   560→                        <GoalRatingSelect
+   561→                          value={item.employeeRating}
+   562→                          onChange={(v) => updateAchievement('goals', idx, 'employeeRating', v)}
+   563→                          disabled={!canEditEmployee}
+   564→                        />
+   565→                      </td>
+   566→                      <td className="p-2">
+   567→                        <GoalRatingSelect
+   568→                          value={item.supervisorRating}
+   569→                          onChange={(v) => updateAchievement('goals', idx, 'supervisorRating', v)}
+   570→                          disabled={!canEditSupervisor}
+   571→                        />
+   572→                      </td>
+   573→                    </tr>
+   574→                  ))}
+   575→                  <tr className="bg-muted/20 font-semibold">
+   576→                    <td colSpan={2} className="p-2 text-right">Sub-Total (Goals):</td>
+   577→                    <td className="p-2 text-center">
+   578→                      {formData.goals.reduce((s, i) => s + (i.employeeRating === 'NA' ? 0 : Number(i.employeeRating)), 0)} /{' '}
+   579→                      {(formData.goals.length - formData.goals.filter((i) => i.employeeRating === 'NA').length) * 3}
+   580→                    </td>
+   581→                    <td className="p-2 text-center">
+   582→                      {formData.goals.reduce((s, i) => s + (i.supervisorRating === 'NA' ? 0 : Number(i.supervisorRating)), 0)} /{' '}
+   583→                      {(formData.goals.length - formData.goals.filter((i) => i.supervisorRating === 'NA').length) * 3}
+   584→                    </td>
+   585→                  </tr>
+   586→                </tbody>
+   587→              </table>
+   588→            </div>
+   589→          </div>
+   590→          <p className="text-xs text-muted-foreground italic">
+   591→            Note: Both achievements and goals are rated on a scale of 0-3. NA items are excluded from the calculation.
+   592→          </p>
+   593→        </CardContent>
+   594→      </Card>
+   595→
+   596→      {/* Section 3: Assessment of Skillset and Competencies */}
+   597→      <Card className="eci-card overflow-hidden">
+   598→        <SectionHeader number={3} title="Assessment of Skillset and Competencies" />
+   599→        <CardContent className="p-4 space-y-4">
+   600→          <p className="text-sm text-muted-foreground bg-blue-50 p-3 rounded-lg border border-blue-200">
+   601→            {SECTION_DESCRIPTIONS.competencies}
+   602→          </p>
+   603→          <p className="text-xs text-muted-foreground">
+   604→            Rating: 1 = Needs Improvement, 2 = Partially Meets, 3 = Meets, 4 = Exceeds, 5 = Greatly Exceeds, NA
+   605→          </p>
+   606→
+   607→          {([
+   608→            { key: 'technicalSkills' as const, label: 'Technical and Soft Skills', items: TECHNICAL_SKILLS },
+   609→            { key: 'leadershipSkills' as const, label: 'Leadership Skills', items: LEADERSHIP_SKILLS },
+   610→            { key: 'managerialSkills' as const, label: 'Managerial Skills', items: MANAGERIAL_SKILLS },
+   611→          ]).map((group) => (
+   612→            <div key={group.key}>
+   613→              <h4 className="font-semibold text-sm mb-2">{group.label}</h4>
+   614→              <div className="overflow-x-auto">
+   615→                <table className="w-full text-sm border-collapse">
+   616→                  <thead>
+   617→                    <tr className="border-b">
+   618→                      <th className="text-left p-2">#</th>
+   619→                      <th className="text-left p-2">Skill</th>
+   620→                      <th className="text-center p-2 w-32">Employee Rating</th>
+   621→                      <th className="text-center p-2 w-32">Supervisor Rating</th>
+   622→                    </tr>
+   623→                  </thead>
+   624→                  <tbody>
+   625→                    {formData[group.key].map((item, idx) => (
+   626→                      <tr key={idx} className="border-b last:border-0">
+   627→                        <td className="p-2 text-muted-foreground">{idx + 1}</td>
+   628→                        <td className="p-2">{item.name}</td>
+   629→                        <td className="p-2">
+   630→                          <CompetencyRatingSelect
+   631→                            value={item.employeeRating}
+   632→                            onChange={(v) => updateSkill(group.key, idx, 'employeeRating', v)}
+   633→                            disabled={!canEditEmployee}
+   634→                          />
+   635→                        </td>
+   636→                        <td className="p-2">
+   637→                          <CompetencyRatingSelect
+   638→                            value={item.supervisorRating}
+   639→                            onChange={(v) => updateSkill(group.key, idx, 'supervisorRating', v)}
+   640→                            disabled={!canEditSupervisor}
+   641→                          />
+   642→                        </td>
+   643→                      </tr>
+   644→                    ))}
+   645→                    <tr className="bg-muted/20 font-semibold">
+   646→                      <td colSpan={2} className="p-2 text-right">Sub-Total:</td>
+   647→                      <td className="p-2 text-center">
+   648→                        {formData[group.key].reduce((s, i) => s + (i.employeeRating === 'NA' ? 0 : Number(i.employeeRating)), 0)} /{' '}
+   649→                        {(formData[group.key].length - formData[group.key].filter((i) => i.employeeRating === 'NA').length) * 5}
+   650→                      </td>
+   651→                      <td className="p-2 text-center">
+   652→                        {formData[group.key].reduce((s, i) => s + (i.supervisorRating === 'NA' ? 0 : Number(i.supervisorRating)), 0)} /{' '}
+   653→                        {(formData[group.key].length - formData[group.key].filter((i) => i.supervisorRating === 'NA').length) * 5}
+   654→                      </td>
+   655→                    </tr>
+   656→                  </tbody>
+   657→                </table>
+   658→              </div>
+   659→              <Separator className="my-3" />
+   660→            </div>
+   661→          ))}
+   662→        </CardContent>
+   663→      </Card>
+   664→
+   665→      {/* Section 4: Notices/Explanations */}
+   666→      <Card className="eci-card overflow-hidden">
+   667→        <SectionHeader number={4} title="Notices/Explanations" />
+   668→        <CardContent className="p-4 space-y-4">
+   669→          <p className="text-sm text-muted-foreground bg-red-50 p-3 rounded-lg border border-red-200">
+   670→            {SECTION_DESCRIPTIONS.explanations}
+   671→          </p>
+   672→          <div className="overflow-x-auto">
+   673→            <table className="w-full text-sm border-collapse">
+   674→              <thead>
+   675→                <tr className="border-b">
+   676→                  <th className="text-left p-2">#</th>
+   677→                  <th className="text-left p-2 min-w-48">Description</th>
+   678→                  <th className="text-center p-2 w-24">Resolved</th>
+   679→                  <th className="text-left p-2 min-w-48">HR Remarks</th>
+   680→                  <th className="text-center p-2 w-32">Category</th>
+   681→                  <th className="text-center p-2 w-24">Rating (0-3)</th>
+   682→                </tr>
+   683→              </thead>
+   684→              <tbody>
+   685→                {formData.explanations.map((item, idx) => (
+   686→                  <tr key={idx} className="border-b last:border-0">
+   687→                    <td className="p-2 text-muted-foreground">{idx + 1}</td>
+   688→                    <td className="p-2">
+   689→                      <Textarea
+   690→                        value={item.description}
+   691→                        onChange={(e) => updateExplanation(idx, 'description', e.target.value)}
+   692→                        disabled={!canEditHR}
+   693→                        placeholder="Description..."
+   694→                        className="min-h-16 text-sm"
+   695→                      />
+   696→                    </td>
+   697→                    <td className="p-2 text-center">
+   698→                      <Checkbox
+   699→                        checked={item.isResolved}
+   700→                        onCheckedChange={(checked) => updateExplanation(idx, 'isResolved', !!checked)}
+   701→                        disabled={!canEditHR}
+   702→                      />
+   703→                    </td>
+   704→                    <td className="p-2">
+   705→                      <Textarea
+   706→                        value={item.hrRemarks}
+   707→                        onChange={(e) => updateExplanation(idx, 'hrRemarks', e.target.value)}
+   708→                        disabled={!canEditHR}
+   709→                        placeholder="HR remarks..."
+   710→                        className="min-h-16 text-sm"
+   711→                      />
+   712→                    </td>
+   713→                    <td className="p-2">
+   714→                      <Select
+   715→                        value={item.category}
+   716→                        onValueChange={(v) => updateExplanation(idx, 'category', v)}
+   717→                        disabled={!canEditHR}
+   718→                      >
+   719→                        <SelectTrigger className="w-28 h-8 text-xs">
+   720→                          <SelectValue placeholder="Select" />
+   721→                        </SelectTrigger>
+   722→                        <SelectContent>
+   723→                          <SelectItem value="attendance">Attendance</SelectItem>
+   724→                          <SelectItem value="behavior">Behavior</SelectItem>
+   725→                          <SelectItem value="performance">Performance</SelectItem>
+   726→                          <SelectItem value="compliance">Compliance</SelectItem>
+   727→                          <SelectItem value="other">Other</SelectItem>
+   728→                        </SelectContent>
+   729→                      </Select>
+   730→                    </td>
+   731→                    <td className="p-2">
+   732→                      <Select
+   733→                        value={String(item.rating)}
+   734→                        onValueChange={(v) => updateExplanation(idx, 'rating', Number(v))}
+   735→                        disabled={!canEditHR}
+   736→                      >
+   737→                        <SelectTrigger className="w-20 h-8 text-xs">
+   738→                          <SelectValue />
+   739→                        </SelectTrigger>
+   740→                        <SelectContent>
+   741→                          <SelectItem value="0">0</SelectItem>
+   742→                          <SelectItem value="1">1</SelectItem>
+   743→                          <SelectItem value="2">2</SelectItem>
+   744→                          <SelectItem value="3">3</SelectItem>
+   745→                        </SelectContent>
+   746→                      </Select>
+   747→                    </td>
+   748→                  </tr>
+   749→                ))}
+   750→                <tr className="bg-muted/20 font-semibold">
+   751→                  <td colSpan={5} className="p-2 text-right">Total Marks Deducted:</td>
+   752→                  <td className="p-2 text-center text-red-600">
+   753→                    {formData.explanations.reduce((s, e) => s + (e.rating || 0), 0)}
+   754→                  </td>
+   755→                </tr>
+   756→              </tbody>
+   757→            </table>
+   758→          </div>
+   759→        </CardContent>
+   760→      </Card>
+   761→
+   762→      {/* Section 5: Overall Performance Evaluation */}
+   763→      <Card className="eci-card overflow-hidden">
+   764→        <SectionHeader number={5} title="Overall Performance Evaluation" />
+   765→        <CardContent className="p-4">
+   766→          <div className="overflow-x-auto">
+   767→            <table className="w-full text-sm border-collapse">
+   768→              <thead>
+   769→                <tr className="border-b bg-muted/30">
+   770→                  <th className="text-left p-3" rowSpan={2}>Description</th>
+   771→                  <th className="text-center p-3 w-28" colSpan={2}>Employee</th>
+   772→                  <th className="text-center p-3 w-28" colSpan={2}>Supervisor</th>
+   773→                </tr>
+   774→              </thead>
+   775→              <tbody>
+   776→                {/* Goals & Achievements */}
+   777→                <tr className="border-b">
+   778→                  <td className="p-3 font-medium">Total NA in Goals & Achievements</td>
+   779→                  <td className="p-3 text-center">{employeeScores?.naCountGoals ?? 0}</td>
+   780→                  <td className="p-3"></td>
+   781→                  <td className="p-3 text-center">{supervisorScores?.naCountGoals ?? 0}</td>
+   782→                  <td className="p-3"></td>
+   783→                </tr>
+   784→                <tr className="border-b">
+   785→                  <td className="p-3 font-medium">Total Marks of Goals & Achievements</td>
+   786→                  <td className="p-3 text-center font-semibold">{employeeScores?.marksGoals ?? 0}</td>
+   787→                  <td className="p-3 text-muted-foreground">/ {employeeScores?.maxMarksGoals ?? 0}</td>
+   788→                  <td className="p-3 text-center font-semibold">{supervisorScores?.marksGoals ?? 0}</td>
+   789→                  <td className="p-3 text-muted-foreground">/ {supervisorScores?.maxMarksGoals ?? 0}</td>
+   790→                </tr>
+   791→                <tr className="border-b bg-muted/10">
+   792→                  <td className="p-3 font-medium">Total NA in Technical Skills</td>
+   793→                  <td className="p-3 text-center">{employeeScores?.naTech ?? 0}</td>
+   794→                  <td className="p-3"></td>
+   795→                  <td className="p-3 text-center">{supervisorScores?.naTech ?? 0}</td>
+   796→                  <td className="p-3"></td>
+   797→                </tr>
+   798→                <tr className="border-b bg-muted/10">
+   799→                  <td className="p-3 font-medium">Total NA in Leadership Skills</td>
+   800→                  <td className="p-3 text-center">{employeeScores?.naLead ?? 0}</td>
+   801→                  <td className="p-3"></td>
+   802→                  <td className="p-3 text-center">{supervisorScores?.naLead ?? 0}</td>
+   803→                  <td className="p-3"></td>
+   804→                </tr>
+   805→                <tr className="border-b bg-muted/10">
+   806→                  <td className="p-3 font-medium">Total NA in Managerial Skills</td>
+   807→                  <td className="p-3 text-center">{employeeScores?.naMgr ?? 0}</td>
+   808→                  <td className="p-3"></td>
+   809→                  <td className="p-3 text-center">{supervisorScores?.naMgr ?? 0}</td>
+   810→                  <td className="p-3"></td>
+   811→                </tr>
+   812→                <tr className="border-b">
+   813→                  <td className="p-3 font-medium">Total of Skillset and Competencies</td>
+   814→                  <td className="p-3 text-center font-semibold">{employeeScores?.totalCompetencies ?? 0}</td>
+   815→                  <td className="p-3 text-muted-foreground">/ {employeeScores?.maxMarksCompetencies ?? 0}</td>
+   816→                  <td className="p-3 text-center font-semibold">{supervisorScores?.totalCompetencies ?? 0}</td>
+   817→                  <td className="p-3 text-muted-foreground">/ {supervisorScores?.maxMarksCompetencies ?? 0}</td>
+   818→                </tr>
+   819→                <tr className="border-b">
+   820→                  <td className="p-3 font-medium">Total NA in Explanations</td>
+   821→                  <td className="p-3 text-center">{employeeScores?.naExplanations ?? 0}</td>
+   822→                  <td className="p-3"></td>
+   823→                  <td className="p-3 text-center">{supervisorScores?.naExplanations ?? 0}</td>
+   824→                  <td className="p-3"></td>
+   825→                </tr>
+   826→                <tr className="border-b">
+   827→                  <td className="p-3 font-medium text-red-600">Marks Deducted Because of Explanations</td>
+   828→                  <td className="p-3 text-center text-red-600 font-semibold">-{employeeScores?.marksDeducted ?? 0}</td>
+   829→                  <td className="p-3"></td>
+   830→                  <td className="p-3 text-center text-red-600 font-semibold">-{supervisorScores?.marksDeducted ?? 0}</td>
+   831→                  <td className="p-3"></td>
+   832→                </tr>
+   833→                <tr className="border-b bg-eci-blue/5 font-bold text-lg">
+   834→                  <td className="p-3">Grand Total</td>
+   835→                  <td className="p-3 text-center">{employeeScores?.grandTotal ?? 0}</td>
+   836→                  <td className="p-3 text-muted-foreground text-sm">/ {((employeeScores?.maxMarksGoals ?? 0) + (employeeScores?.maxMarksCompetencies ?? 0) + (employeeScores?.maxMarksExplanations ?? 0))}</td>
+   837→                  <td className="p-3 text-center">{supervisorScores?.grandTotal ?? 0}</td>
+   838→                  <td className="p-3 text-muted-foreground text-sm">/ {((supervisorScores?.maxMarksGoals ?? 0) + (supervisorScores?.maxMarksCompetencies ?? 0) + (supervisorScores?.maxMarksExplanations ?? 0))}</td>
+   839→                </tr>
+   840→                <tr className="border-b bg-green-50">
+   841→                  <td className="p-3 font-bold">Overall Performance %</td>
+   842→                  <td className="p-3 text-center font-bold text-lg">{employeeScores?.overallPercentage ?? 0}%</td>
+   843→                  <td className="p-3"></td>
+   844→                  <td className="p-3 text-center font-bold text-lg">{supervisorScores?.overallPercentage ?? 0}%</td>
+   845→                  <td className="p-3"></td>
+   846→                </tr>
+   847→                <tr className="bg-eci-blue/10">
+   848→                  <td className="p-3 font-bold">Rating</td>
+   849→                  <td className="p-3 text-center font-semibold" style={{ color: employeeScores?.rating ? (employeeScores.overallPercentage >= 86 ? '#16a34a' : employeeScores.overallPercentage >= 71 ? '#2563eb' : employeeScores.overallPercentage >= 56 ? '#ca8a04' : employeeScores.overallPercentage >= 41 ? '#ea580c' : '#dc2626') : undefined }}>
+   850→                    {employeeScores?.rating || '-'}
+   851→                  </td>
+   852→                  <td className="p-3"></td>
+   853→                  <td className="p-3 text-center font-semibold" style={{ color: supervisorScores?.rating ? (supervisorScores.overallPercentage >= 86 ? '#16a34a' : supervisorScores.overallPercentage >= 71 ? '#2563eb' : supervisorScores.overallPercentage >= 56 ? '#ca8a04' : supervisorScores.overallPercentage >= 41 ? '#ea580c' : '#dc2626') : undefined }}>
+   854→                    {supervisorScores?.rating || '-'}
+   855→                  </td>
+   856→                  <td className="p-3"></td>
+   857→                </tr>
+   858→              </tbody>
+   859→            </table>
+   860→          </div>
+   861→        </CardContent>
+   862→      </Card>
+   863→
+   864→      {/* Section 6: Goals for Next Year */}
+   865→      <Card className="eci-card overflow-hidden">
+   866→        <SectionHeader number={6} title={`Goals for Next Year`} />
+   867→        <CardContent className="p-4 space-y-4">
+   868→          <p className="text-sm text-muted-foreground bg-green-50 p-3 rounded-lg border border-green-200">
+   869→            {SECTION_DESCRIPTIONS.futureGoals}
+   870→          </p>
+   871→          <div className="overflow-x-auto">
+   872→            <table className="w-full text-sm border-collapse">
+   873→              <thead>
+   874→                <tr className="border-b">
+   875→                  <th className="text-left p-2">#</th>
+   876→                  <th className="text-left p-2 min-w-48">Goal Description</th>
+   877→                  <th className="text-center p-2">Q1</th>
+   878→                  <th className="text-center p-2">Q2</th>
+   879→                  <th className="text-center p-2">Q3</th>
+   880→                  <th className="text-center p-2">Q4</th>
+   881→                </tr>
+   882→              </thead>
+   883→              <tbody>
+   884→                {formData.futureGoals.map((item, idx) => (
+   885→                  <tr key={idx} className="border-b last:border-0">
+   886→                    <td className="p-2 text-muted-foreground">{idx + 1}</td>
+   887→                    <td className="p-2">
+   888→                      <Textarea
+   889→                        value={item.description}
+   890→                        onChange={(e) => updateGoal(idx, 'description', e.target.value)}
+   891→                        disabled={!canEditEmployee}
+   892→                        placeholder="Describe goal..."
+   893→                        className="min-h-12 text-sm"
+   894→                      />
+   895→                    </td>
+   896→                    {[0, 1, 2, 3].map((qi) => (
+   897→                      <td key={qi} className="p-2 text-center">
+   898→                        <Checkbox
+   899→                          checked={item.quarters[qi]}
+   900→                          onCheckedChange={(checked) => updateGoal(idx, 'quarters', checked, qi)}
+   901→                          disabled={!canEditEmployee}
+   902→                        />
+   903→                      </td>
+   904→                    ))}
+   905→                  </tr>
+   906→                ))}
+   907→              </tbody>
+   908→            </table>
+   909→          </div>
+   910→          <p className="text-xs text-muted-foreground">
+   911→            Filled goals: {formData.futureGoals.filter((g) => g.description.trim() !== '').length} / 4 (minimum 3 required)
+   912→          </p>
+   913→        </CardContent>
+   914→      </Card>
+   915→
+   916→      {/* Section 7: Remarks on Employee's Performance */}
+   917→      <Card className="eci-card overflow-hidden">
+   918→        <SectionHeader number={7} title="Remarks on Employee's Performance (Mandatory)" />
+   919→        <CardContent className="p-4 space-y-6">
+   920→          <p className="text-sm text-muted-foreground bg-purple-50 p-3 rounded-lg border border-purple-200">
+   921→            {SECTION_DESCRIPTIONS.remarks}
+   922→          </p>
+   923→
+   924→          {/* HR Section */}
+   925→          <div>
+   926→            <h4 className="font-semibold text-sm mb-3 text-eci-blue">HR Section</h4>
+   927→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   928→              {[
+   929→                { key: 'SatisfactionSkills', label: 'Satisfaction About Skills' },
+   930→                { key: 'SatisfactionBehavior', label: 'Satisfaction About Behavior' },
+   931→                { key: 'SatisfactionPerformance', label: 'Satisfaction About Performance' },
+   932→                { key: 'RecommendationMonitoring', label: 'Recommendation for Close Monitoring' },
+   933→                { key: 'RecommendationPromotion', label: 'Recommendation for Promotion' },
+   934→                { key: 'RecommendationReward', label: 'Recommendation for Reward/Award' },
+   935→              ].map((item) => (
+   936→                <div key={item.key} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+   937→                  <span className="text-sm">{item.label}</span>
+   938→                  <div className="flex items-center gap-3">
+   939→                    <label className="flex items-center gap-1 text-sm cursor-pointer">
+   940→                      <RadioGroup
+   941→                        value={formData.remarks[`hr${item.key}` as keyof RemarksData] === true ? 'yes' : formData.remarks[`hr${item.key}` as keyof RemarksData] === false ? 'no' : ''}
+   942→                        onValueChange={(v) => updateRemarks('hr', item.key, v === 'yes' ? true : v === 'no' ? false : null)}
+   943→                        disabled={!canEditHR}
+   944→                        className="flex"
+   945→                      >
+   946→                        <div className="flex items-center gap-2">
+   947→                          <RadioGroupItem value="yes" id={`hr-${item.key}-yes`} />
+   948→                          <Label htmlFor={`hr-${item.key}-yes`} className="text-sm">Yes</Label>
+   949→                        </div>
+   950→                        <div className="flex items-center gap-2 ml-3">
+   951→                          <RadioGroupItem value="no" id={`hr-${item.key}-no`} />
+   952→                          <Label htmlFor={`hr-${item.key}-no`} className="text-sm">No</Label>
+   953→                        </div>
+   954→                      </RadioGroup>
+   955→                    </label>
+   956→                  </div>
+   957→                </div>
+   958→              ))}
+   959→            </div>
+   960→            <div className="mt-4">
+   961→              <Label className="text-sm font-medium">HR General Remarks</Label>
+   962→              <Textarea
+   963→                value={formData.remarks.hrGeneralRemarks}
+   964→                onChange={(e) => updateRemarks('hr', 'GeneralRemarks', e.target.value)}
+   965→                disabled={!canEditHR}
+   966→                placeholder="Enter HR general remarks..."
+   967→                className="mt-2 min-h-20"
+   968→              />
+   969→            </div>
+   970→          </div>
+   971→
+   972→          <Separator />
+   973→
+   974→          {/* Supervisor Section */}
+   975→          <div>
+   976→            <h4 className="font-semibold text-sm mb-3 text-eci-blue">Supervisor Section</h4>
+   977→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   978→              {[
+   979→                { key: 'Satisfaction', label: 'Satisfaction' },
+   980→                { key: 'ConsiderationPromotion', label: 'Consideration for Promotion' },
+   981→                { key: 'ConsiderationIncrement', label: 'Consideration for Increment' },
+   982→                { key: 'ConsiderationReward', label: 'Consideration for Reward/Award' },
+   983→              ].map((item) => (
+   984→                <div key={item.key} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+   985→                  <span className="text-sm">{item.label}</span>
+   986→                  <RadioGroup
+   987→                    value={formData.remarks[`supervisor${item.key}` as keyof RemarksData] === true ? 'yes' : formData.remarks[`supervisor${item.key}` as keyof RemarksData] === false ? 'no' : ''}
+   988→                    onValueChange={(v) => updateRemarks('supervisor', item.key, v === 'yes' ? true : v === 'no' ? false : null)}
+   989→                    disabled={!canEditSupervisor}
+   990→                    className="flex"
+   991→                  >
+   992→                    <div className="flex items-center gap-2">
+   993→                      <RadioGroupItem value="yes" id={`sup-${item.key}-yes`} />
+   994→                      <Label htmlFor={`sup-${item.key}-yes`} className="text-sm">Yes</Label>
+   995→                    </div>
+   996→                    <div className="flex items-center gap-2 ml-3">
+   997→                      <RadioGroupItem value="no" id={`sup-${item.key}-no`} />
+   998→                      <Label htmlFor={`sup-${item.key}-no`} className="text-sm">No</Label>
+   999→                    </div>
+  1000→                  </RadioGroup>
+  1001→                </div>
+  1002→              ))}
+  1003→            </div>
+  1004→            <div className="mt-4">
+  1005→              <Label className="text-sm font-medium">Supervisor General Remarks</Label>
+  1006→              <Textarea
+  1007→                value={formData.remarks.supervisorGeneralRemarks}
+  1008→                onChange={(e) => updateRemarks('supervisor', 'GeneralRemarks', e.target.value)}
+  1009→                disabled={!canEditSupervisor}
+  1010→                placeholder="Enter supervisor general remarks..."
+  1011→                className="mt-2 min-h-20"
+  1012→              />
+  1013→            </div>
+  1014→          </div>
+  1015→        </CardContent>
+  1016→      </Card>
+  1017→
+  1018→      {/* Section 8: Certification */}
+  1019→      <Card className="eci-card overflow-hidden">
+  1020→        <SectionHeader number={8} title="Certification" />
+  1021→        <CardContent className="p-4">
+  1022→          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  1023→            <div className="space-y-2">
+  1024→              <Label className="text-sm font-medium">Employee's Signature</Label>
+  1025→              <Input
+  1026→                value={formData.employeeSignature}
+  1027→                onChange={(e) => setFormData((prev) => prev ? { ...prev, employeeSignature: e.target.value } : prev)}
+  1028→                disabled={!canEditEmployee}
+  1029→                placeholder="Full name as signature"
+  1030→              />
+  1031→              <Input
+  1032→                type="date"
+  1033→                value={formData.employeeSignatureDate}
+  1034→                onChange={(e) => setFormData((prev) => prev ? { ...prev, employeeSignatureDate: e.target.value } : prev)}
+  1035→                disabled={!canEditEmployee}
+  1036→              />
+  1037→            </div>
+  1038→            <div className="space-y-2">
+  1039→              <Label className="text-sm font-medium">Supervisor's Signature</Label>
+  1040→              <Input
+  1041→                value={formData.supervisorSignature}
+  1042→                onChange={(e) => setFormData((prev) => prev ? { ...prev, supervisorSignature: e.target.value } : prev)}
+  1043→                disabled={!canEditSupervisor}
+  1044→                placeholder="Full name as signature"
+  1045→              />
+  1046→              <Input
+  1047→                type="date"
+  1048→                value={formData.supervisorSignatureDate}
+  1049→                onChange={(e) => setFormData((prev) => prev ? { ...prev, supervisorSignatureDate: e.target.value } : prev)}
+  1050→                disabled={!canEditSupervisor}
+  1051→              />
+  1052→            </div>
+  1053→            <div className="space-y-2">
+  1054→              <Label className="text-sm font-medium">CEO's Signature</Label>
+  1055→              <Input
+  1056→                value={formData.ceoSignature}
+  1057→                onChange={(e) => setFormData((prev) => prev ? { ...prev, ceoSignature: e.target.value } : prev)}
+  1058→                disabled={userRole !== 'management'}
+  1059→                placeholder="Full name as signature"
+  1060→              />
+  1061→              <Input
+  1062→                type="date"
+  1063→                value={formData.ceoSignatureDate}
+  1064→                onChange={(e) => setFormData((prev) => prev ? { ...prev, ceoSignatureDate: e.target.value } : prev)}
+  1065→                disabled={userRole !== 'management'}
+  1066→              />
+  1067→            </div>
+  1068→          </div>
+  1069→        </CardContent>
+  1070→      </Card>
+  1071→
+  1072→      {/* Bottom Actions */}
+  1073→      <div className="flex items-center justify-between no-print">
+  1074→        <Button variant="outline" onClick={() => setCurrentView('appraisal-list')}>
+  1075→          Back to List
+  1076→        </Button>
+  1077→        <div className="flex items-center gap-2">
+  1078→          {canSubmit && (
+  1079→            <Button className="eci-btn-primary" onClick={handleSubmit} disabled={submitting}>
+  1080→              {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+  1081→              Submit
+  1082→            </Button>
+  1083→          )}
+  1084→          <Button variant="outline" onClick={handleSave} disabled={saving}>
+  1085→            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+  1086→            Save Draft
+  1087→          </Button>
+  1088→        </div>
+  1089→      </div>
+  1090→
+  1091→      {/* Return Dialog */}
+  1092→      <Dialog open={returnDialog} onOpenChange={setReturnDialog}>
+  1093→        <DialogContent>
+  1094→          <DialogHeader>
+  1095→            <DialogTitle>Return for Correction</DialogTitle>
+  1096→            <DialogDescription>
+  1097→              Please provide a reason for returning this appraisal for correction.
+  1098→            </DialogDescription>
+  1099→          </DialogHeader>
+  1100→          <Textarea
+  1101→            value={returnReason}
+  1102→            onChange={(e) => setReturnReason(e.target.value)}
+  1103→            placeholder="Enter reason for return..."
+  1104→            className="min-h-24"
+  1105→          />
+  1106→          <DialogFooter>
+  1107→            <Button variant="outline" onClick={() => setReturnDialog(false)}>Cancel</Button>
+  1108→            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleReturn} disabled={returning}>
+  1109→              {returning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RotateCcw className="h-4 w-4 mr-2" />}
+  1110→              Return
+  1111→            </Button>
+  1112→          </DialogFooter>
+  1113→        </DialogContent>
+  1114→      </Dialog>
+  1115→    </div>
+  1116→  );
+  1117→}

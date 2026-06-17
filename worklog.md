@@ -382,3 +382,23 @@ Stage Summary:
 - Solution: lightweight standalone production server (110MB) with auto-restart watchdog
 - Preview panel now serves through Caddy (port 81) → standalone Next.js (port 3000)
 - All 13+ pages accessible: Login, Dashboard, Master Data, Appraisal Cycles, etc.
+
+---
+Task ID: 23
+Agent: Main Orchestrator
+Task: Implement dual-role employee-supervisor support across entire HRM system
+
+Work Log:
+- Analyzed 14 critical issues across schema, API routes, and frontend components
+- Updated Prisma schema: added `isSupervisor Boolean` to User, `escalatedSupervisorId` to AppraisalAssignment
+- Updated `UserRole` type to include 'hr' (was used in UI but not in type union)
+- Updated 9 API route files for dual-role support
+- Updated 8 frontend component files
+- Rebuilt production, copied static files to standalone, restarted server
+- Verified with agent-browser: login, admin dashboard, employee list with Is Supervisor column, employee form with toggle, supervisor dashboard with My Appraisal section, appraisal list with My/Team tabs
+
+Stage Summary:
+- Schema changes: `isSupervisor` on User, `escalatedSupervisorId` on AppraisalAssignment
+- API changes: auth, switch, dashboard/stats, cycles/activate, assignments, assignments/submit, assignments/form, users, users/[id]
+- Frontend changes: LoginView, SupervisorDashboard, EmployeeDashboard, AppraisalList, AppraisalForm, EnhancedEmployeeForm, EnhancedEmployeeList
+- Key behaviors: any employee can be a supervisor, self-review prevented, escalated supervisor assigned when needed, dashboards show correct data

@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Clock, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertCircle, Info, Shield } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 import { APPRAISAL_STATUS_LABELS, APPRAISAL_STATUS_COLORS, OVERALL_RATING_SCALE } from '@/lib/constants';
@@ -92,6 +92,31 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Supervisor Privileges Banner */}
+      {currentUser?.isSupervisor && (
+        <Card className="eci-card border-l-4 border-l-eci-blue bg-eci-blue/5">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
+              <Shield className="h-5 w-5 text-eci-blue shrink-0" />
+              <div>
+                <p className="font-semibold text-sm">You have supervisor privileges.</p>
+                <p className="text-sm text-muted-foreground">
+                  View your team&apos;s appraisals in the Appraisals section.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => setCurrentView('appraisal-list')}
+            >
+              View Team Appraisals
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Current Appraisal Status */}
       <Card className="eci-card">
         <CardHeader>

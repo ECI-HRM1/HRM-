@@ -9,16 +9,38 @@ export async function GET(request: NextRequest) {
     const supervisorId = searchParams.get('supervisorId') || undefined;
     const status = searchParams.get('status') || undefined;
     const department = searchParams.get('department') || undefined;
+    const view = searchParams.get('view') || undefined;
+    const managementView = searchParams.get('managementView') === 'true';
+    const userId = searchParams.get('userId') || undefined;
 
     const where: Record<string, unknown> = {};
 
     if (cycleId) where.cycleId = cycleId;
-    if (employeeId) where.employeeId = employeeId;
-    if (supervisorId) where.supervisorId = supervisorId;
     if (status) where.status = status;
 
     if (department) {
       where.employee = { department };
+    }
+
+    // View modes for dual-role users
+    if (view === 'both' && userId) {
+      // Return assignments where user is either employee OR supervisor (for dual-role users)
+      where.OR = [
+        { employeeId: userId },
+        { supervisorId: userId },
+        { escalatedSupervisorId: userId },
+      ];
+    } else if (view === 'team' && userId) {
+      // Return only supervisor assignments, excluding self
+      where.supervisorId = userId;
+      where.employeeId = { not: userId };
+    } else if (managementView) {
+      // Management view: return all assignments
+      // No additional user-specific filter
+    } else {
+      // Default behavior: apply filters individually
+      if (employeeId) where.employeeId = employeeId;
+      if (supervisorId) where.supervisorId = supervisorId;
     }
 
     const assignments = await db.appraisalAssignment.findMany({
@@ -28,6 +50,9 @@ export async function GET(request: NextRequest) {
           select: { id: true, name: true, employeeId: true, designation: true, department: true },
         },
         supervisor: {
+          select: { id: true, name: true, designation: true },
+        },
+        escalatedSupervisor: {
           select: { id: true, name: true, designation: true },
         },
         cycle: {

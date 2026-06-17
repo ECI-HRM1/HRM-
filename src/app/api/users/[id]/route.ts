@@ -50,6 +50,7 @@ export async function GET(
       currentEdu: user.currentEdu,
       lineManagerId: user.lineManagerId,
       role: user.role,
+      isSupervisor: user.isSupervisor,
       isActive: user.isActive,
       lineManager: user.lineManager,
       supervisedEmployees: user.supervisedEmployees,
@@ -113,6 +114,7 @@ export async function PUT(
         ...(body.lineManagerId !== undefined && { lineManagerId: body.lineManagerId || null }),
         ...(body.role !== undefined && { role: body.role }),
         ...(body.isActive !== undefined && { isActive: body.isActive }),
+        ...(body.isSupervisor !== undefined && { isSupervisor: body.isSupervisor }),
       },
       include: {
         lineManager: {
@@ -134,6 +136,7 @@ export async function PUT(
       currentEdu: user.currentEdu,
       lineManagerId: user.lineManagerId,
       role: user.role,
+      isSupervisor: user.isSupervisor,
       isActive: user.isActive,
       lineManager: user.lineManager,
     });

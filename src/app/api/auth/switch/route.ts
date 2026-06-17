@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validRoles = ['admin', 'supervisor', 'management', 'employee'];
+    const validRoles = ['admin', 'supervisor', 'management', 'employee', 'hr'];
     if (!validRoles.includes(targetRole)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       currentEdu: user.currentEdu,
       role: targetRole,
       isActive: user.isActive,
+      isSupervisor: user.isSupervisor,
       lineManagerId: user.lineManagerId,
       lineManager: user.lineManager,
       originalRole: user.role,

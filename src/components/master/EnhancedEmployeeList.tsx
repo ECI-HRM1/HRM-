@@ -42,6 +42,7 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { EmployeeDetail } from '@/lib/types';
@@ -325,6 +326,7 @@ export default function EnhancedEmployeeList() {
                   <TableHead className="hidden lg:table-cell">Designation</TableHead>
                   <TableHead className="hidden lg:table-cell">Department</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead className="hidden md:table-cell">Is Supervisor</TableHead>
                   <TableHead className="hidden xl:table-cell">Line Manager</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden xl:table-cell text-center">Appraisals</TableHead>
@@ -335,7 +337,7 @@ export default function EnhancedEmployeeList() {
                 {filtered.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={isAdmin ? 11 : 9}
+                      colSpan={isAdmin ? 12 : 10}
                       className="text-center py-8 text-muted-foreground"
                     >
                       {search || deptFilter !== 'all' || desigFilter !== 'all' || roleFilter !== 'all' || statusFilter !== 'all'
@@ -368,6 +370,16 @@ export default function EnhancedEmployeeList() {
                         <Badge className={ROLE_BADGE[emp.role] || ROLE_BADGE.employee}>
                           {ROLE_LABEL[emp.role] || emp.role}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {emp.isSupervisor ? (
+                          <span className="inline-flex items-center gap-1 text-sm text-green-700">
+                            <ShieldCheck className="h-4 w-4" />
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
                         {emp.lineManager?.name || '-'}

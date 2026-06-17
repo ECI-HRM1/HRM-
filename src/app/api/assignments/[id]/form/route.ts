@@ -21,6 +21,9 @@ export async function GET(
         supervisor: {
           select: { id: true, name: true, designation: true },
         },
+        escalatedSupervisor: {
+          select: { id: true, name: true, designation: true },
+        },
         cycle: {
           select: { id: true, name: true, cycleType: true, year: true, periodFrom: true, periodTo: true },
         },
@@ -107,6 +110,22 @@ export async function PUT(
 
     if (!assignment) {
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+    }
+
+    // Authorization: verify the caller has the right to save (optional callerId for backward compatibility)
+    const callerId = body.callerId;
+    if (callerId) {
+      const isEmployee = assignment.employeeId === callerId;
+      const isSupervisor = assignment.supervisorId === callerId || assignment.escalatedSupervisorId === callerId;
+      const isHR = assignment.currentActionBy === 'hr';
+      const isManagement = assignment.currentActionBy === 'management';
+
+      if (assignment.currentActionBy === 'employee' && !isEmployee) {
+        return NextResponse.json({ error: 'Only the employee can edit during their phase' }, { status: 403 });
+      }
+      if (assignment.currentActionBy === 'supervisor' && !isSupervisor && !isHR && !isManagement) {
+        return NextResponse.json({ error: 'Only the assigned supervisor can edit during their phase' }, { status: 403 });
+      }
     }
 
     let formData = await db.appraisalFormData.findUnique({

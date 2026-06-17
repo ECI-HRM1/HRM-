@@ -82,6 +82,7 @@ export default function LoginView() {
     currentEdu: demoUser.role === 'admin' ? 'MBA (HRM)' : demoUser.role === 'management' ? 'MBA' : 'BS',
     lineManagerId: demoUser.role === 'supervisor' ? 'cmqhtmwr8001qmq3k497m6k4v' : demoUser.role === 'employee' ? (demoUser.id === '5' ? 'cmqhtmwr9003smq3knylj3q9z' : 'cmqhtmwra001tmq3kod69yveg') : null,
     role: demoUser.role as any,
+    isSupervisor: demoUser.role === 'supervisor' || demoUser.role === 'admin',
     isActive: true,
     lineManager: null,
   });

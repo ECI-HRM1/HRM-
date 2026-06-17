@@ -80,7 +80,7 @@ export default function AppraisalForm() {
 
   // Can the user edit?
   const canEditEmployee = userRole === 'employee' && currentActionBy === 'employee';
-  const canEditSupervisor = userRole === 'supervisor' && (currentActionBy === 'supervisor' || currentActionBy === 'employee');
+  const canEditSupervisor = (userRole === 'supervisor' || userRole === 'admin' || userRole === 'hr') && currentActionBy === 'supervisor' && currentUser?.id !== assignment?.employeeId;
   const canEditHR = (userRole === 'admin' || userRole === 'hr') && currentActionBy === 'hr';
   const canEditManagement = userRole === 'management' && (currentActionBy === 'management');
   const canSubmit = currentActionBy === userRole;
@@ -201,7 +201,7 @@ export default function AppraisalForm() {
       const res = await fetch(`/api/assignments/${assignmentId}/form`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, callerId: currentUser?.id }),
       });
       if (res.ok) {
         toast.success('Draft saved successfully');
@@ -221,6 +221,7 @@ export default function AppraisalForm() {
     if (userRole === 'employee') return 'employee_submit';
     if (userRole === 'supervisor') return 'supervisor_submit';
     if (userRole === 'admin') return 'hr_submit';
+    if (userRole === 'hr') return 'hr_submit';
     if (userRole === 'management') return 'management_approve';
     return 'employee_submit';
   };
@@ -244,7 +245,7 @@ export default function AppraisalForm() {
       await fetch(`/api/assignments/${assignmentId}/form`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, callerId: currentUser?.id }),
       });
 
       const action = getSubmitAction();
@@ -430,6 +431,19 @@ export default function AppraisalForm() {
           </Button>
         </div>
       </div>
+
+      {/* Escalation Notice */}
+      {assignment.escalatedSupervisorId && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900">
+          <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-semibold text-sm">Appraisal Escalated</p>
+            <p className="text-sm">
+              This appraisal was escalated to {assignment.escalatedSupervisor?.name || 'a higher manager'} to prevent self-review.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Section 1: Basic Information */}
       <Card className="eci-card overflow-hidden">

@@ -21,7 +21,7 @@ export type AppView =
   | 'login'
   | 'audit-logs';
 
-export type UserRole = 'admin' | 'supervisor' | 'management' | 'employee';
+export type UserRole = 'admin' | 'supervisor' | 'management' | 'employee' | 'hr';
 
 export type CycleStatus = 'draft' | 'active' | 'closed' | 'archived';
 export type CycleType = 'mid_year' | 'annual';
@@ -191,7 +191,8 @@ export interface EmployeeDetail {
   yearsWithECI: string;
   currentEdu: string;
   lineManagerId: string | null;
-  role: UserRole | 'hr';
+  role: UserRole;
+  isSupervisor: boolean;
   isActive: boolean;
   lineManager?: { id: string; name: string; designation: string } | null;
   supervisedEmployees?: { id: string; name: string; employeeId: string; designation: string; department: string; isActive: boolean }[];
@@ -276,12 +277,14 @@ export interface AssignmentDetail {
   cycleId: string;
   employeeId: string;
   supervisorId: string;
+  escalatedSupervisorId?: string | null;
   status: AppraisalStatus;
   currentActionBy: ActionBy;
   returnReason: string;
   deadline: string | null;
   employee?: { id: string; name: string; employeeId: string; designation: string; department: string };
   supervisor?: { id: string; name: string; designation: string };
+  escalatedSupervisor?: { id: string; name: string; designation: string } | null;
   cycle?: { id: string; name: string; cycleType: string; year: string; periodFrom: string; periodTo: string; status: string };
   formData?: any;
   createdAt: string;

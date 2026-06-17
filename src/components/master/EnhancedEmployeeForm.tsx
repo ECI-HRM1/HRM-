@@ -56,6 +56,7 @@ export default function EnhancedEmployeeForm() {
     designation: '',
     department: '',
     role: 'employee' as string,
+    isSupervisor: false,
     overallExp: '',
     yearsWithECI: '',
     currentEdu: '',
@@ -116,6 +117,7 @@ export default function EnhancedEmployeeForm() {
               designation: emp.designation,
               department: emp.department,
               role: emp.role,
+              isSupervisor: emp.isSupervisor ?? false,
               overallExp: emp.overallExp || '',
               yearsWithECI: emp.yearsWithECI || '',
               currentEdu: emp.currentEdu || '',
@@ -360,6 +362,19 @@ export default function EnhancedEmployeeForm() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="isSupervisor">Can Supervise Others (Line Manager)</Label>
+              <div className="flex items-center gap-3 pt-1">
+                <Switch
+                  id="isSupervisor"
+                  checked={form.isSupervisor}
+                  onCheckedChange={(v) => updateForm('isSupervisor', v)}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {form.isSupervisor ? 'Yes — can evaluate team members' : 'No — employee only'}
+                </span>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="overallExp">Overall Experience</Label>

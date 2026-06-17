@@ -40,7 +40,7 @@ async function getAdminManagementStats(userId: string, role: string, activeCycle
   });
 
   const activeAssignments = allAssignments.filter((a) => a.cycle.status === 'active');
-  const totalEmployees = await db.user.count({ where: { isActive: true, role: 'employee' } });
+  const totalEmployees = await db.user.count({ where: { isActive: true } });
 
   const submittedAppraisals = activeAssignments.filter(
     (a) => a.status === 'approved' || a.status === 'shared_with_employee' || a.status === 'acknowledged_by_employee'
@@ -150,7 +150,7 @@ async function getAdminManagementStats(userId: string, role: string, activeCycle
 
 async function getSupervisorStats(userId: string, activeCyclesCount: number) {
   const myAssignments = await db.appraisalAssignment.findMany({
-    where: { supervisorId: userId },
+    where: { supervisorId: userId, employeeId: { not: userId } },
     include: {
       cycle: { select: { status: true } },
       employee: { select: { id: true, name: true, department: true, designation: true } },
@@ -206,6 +206,55 @@ async function getSupervisorStats(userId: string, activeCyclesCount: number) {
     score: Math.round(s.total / s.count),
   }));
 
+  // My own appraisal as an employee (dual-role support)
+  const myOwnAssignments = await db.appraisalAssignment.findMany({
+    where: { employeeId: userId },
+    include: {
+      cycle: { select: { status: true, name: true, cycleType: true, periodFrom: true, periodTo: true, year: true } },
+      formData: { select: { overallPercentageEmployee: true, ratingEmployee: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const myActiveAssignments = myOwnAssignments.filter((a) => a.cycle.status === 'active');
+  const myPendingCount = myActiveAssignments.filter(
+    (a) => a.status === 'assigned_to_employee' || a.status === 'returned_for_correction'
+  ).length;
+  const mySubmittedCount = myActiveAssignments.filter(
+    (a) => a.status === 'submitted_by_employee' || a.status === 'submitted_by_supervisor' || a.status === 'approved' || a.status === 'shared_with_employee' || a.status === 'acknowledged_by_employee'
+  ).length;
+
+  const myCurrent = myActiveAssignments.find(
+    (a) => a.status !== 'approved' && a.status !== 'acknowledged_by_employee' && a.status !== 'closed'
+  );
+  let myCurrentAssignment = null;
+  if (myCurrent) {
+    myCurrentAssignment = {
+      id: myCurrent.id,
+      status: myCurrent.status,
+      deadline: myCurrent.deadline?.toISOString() || null,
+      cycleName: myCurrent.cycle.name,
+      cycleType: myCurrent.cycle.cycleType,
+      periodFrom: myCurrent.cycle.periodFrom,
+      periodTo: myCurrent.cycle.periodTo,
+    };
+  }
+
+  const myHistory = myOwnAssignments.filter(
+    (a) => a.status === 'approved' || a.status === 'shared_with_employee' || a.status === 'acknowledged_by_employee' || a.status === 'closed' || a.cycle.status === 'closed'
+  );
+  const myAppraisalHistory = myHistory.map((h) => ({
+    id: h.id,
+    cycleName: h.cycle.name,
+    year: h.cycle.year,
+    cycleType: h.cycle.cycleType,
+    status: h.status,
+    periodFrom: h.cycle.periodFrom,
+    periodTo: h.cycle.periodTo,
+    overallScore: h.formData?.overallPercentageEmployee ?? 0,
+    rating: h.formData?.ratingEmployee ?? '',
+  }));
+
   const stats: Record<string, unknown> = {
     activeCycles: activeCyclesCount,
     teamMembers: totalAssigned,
@@ -219,6 +268,12 @@ async function getSupervisorStats(userId: string, activeCyclesCount: number) {
     returnedCases,
     teamMembersList,
     teamPerformance,
+    myAppraisal: {
+      currentAssignment: myCurrentAssignment,
+      pendingCount: myPendingCount,
+      submittedCount: mySubmittedCount,
+      history: myAppraisalHistory,
+    },
   };
 
   return NextResponse.json(stats);
