@@ -424,3 +424,43 @@ Stage Summary:
 - Fix: rebuilt production + restarted with watchdog auto-restart
 - Full login → dashboard flow verified for Admin and Supervisor roles
 - All dual-role support (Task 23) intact and working
+
+---
+Task ID: 25
+Agent: Main Orchestrator
+Task: Create production deployment package and comprehensive deployment guide
+
+Work Log:
+- Updated /api/seed/route.ts: Added ?mode=production parameter
+  - Production mode: creates ONLY admin account (imunir@eci.com.pk) + 3 rating scales + 22 appraisal categories
+  - Demo mode: (default) creates full demo dataset for development
+  - Admin credentials configurable via env vars (ADMIN_EMAIL, ADMIN_NAME, ADMIN_PASSWORD)
+- Updated LoginView.tsx: Removed all demo user buttons and mock data fallbacks
+  - Production login shows only email/password form + Sign In button
+  - Added security notice "Secure internal system — ECI Pvt Ltd"
+  - Added autoFocus on email field for faster login
+- Created .env.example with production configuration template (PostgreSQL, admin credentials, AI keys)
+- Created ecosystem.config.json for PM2 process management on Linux
+- Created deploy/ directory with 8 deployment artifacts:
+  - nginx-eci-hrm.conf: Nginx reverse proxy config with gzip, security headers, static caching
+  - iis-web.config: IIS reverse proxy config with ARR module for Windows
+  - setup-linux.sh: Automated Ubuntu server setup (Node.js, PostgreSQL, PM2, Nginx, Git)
+  - setup-windows.ps1: Automated Windows server setup (Node.js, PostgreSQL, NSSM, IIS, Git)
+  - backup-db.sh: Daily PostgreSQL backup script with 30-day retention
+  - backup-db.bat: Windows daily backup script
+  - backup-full.sh: Weekly full backup (DB + files + uploads) with 12-week retention
+  - ECI-HRM-Deployment-Guide.pdf: 24-page comprehensive deployment guide
+  - deployment-guide.html: HTML source of the deployment guide
+- Rebuilt production standalone server
+- Verified:
+  - Production login page shows NO demo buttons (email/password/Sign In only)
+  - Production seed creates 1 admin user, 3 rating scales, 22 categories, 0 demo data
+  - Admin login via API returns correct user data for imunir@eci.com.pk
+
+Stage Summary:
+- Complete deployment package ready for internal office server deployment
+- Supports both Linux (Ubuntu 22.04/24.04) and Windows (Server/10/11)
+- Admin account: imunir@eci.com.pk / ECI@dm1n#2025!Secure
+- 24-page PDF guide covers: server prep, software install, code deploy, process mgmt, reverse proxy, backups, testing checklist, maintenance
+- All demo/test accounts removed from production seed
+- Key files: deploy/*.conf, deploy/*.sh, deploy/*.ps1, deploy/*.bat, .env.example, ecosystem.config.json

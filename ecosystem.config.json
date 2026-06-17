@@ -1,0 +1,33 @@
+{
+  "apps": [
+    {
+      "name": "eci-hrm",
+      "script": ".next/standalone/server.js",
+      "cwd": "/opt/eci-hrm",
+      "instances": 1,
+      "exec_mode": "fork",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3000,
+        "HOSTNAME": "0.0.0.0",
+        "DATABASE_URL": "postgresql://hrm_user:CHANGE_ME_STRONG_PASSWORD@localhost:5432/eci_hrm?schema=public",
+        "ADMIN_EMAIL": "imunir@eci.com.pk",
+        "ADMIN_NAME": "Muhammad Unir",
+        "ADMIN_PASSWORD": "ECI@dm1n#2025!Secure",
+        "ADMIN_EMPLOYEE_ID": "ECI-001",
+        "NEXT_PUBLIC_APP_URL": "http://hrm.eci.local"
+      },
+      "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
+      "error_file": "/var/log/eci-hrm/error.log",
+      "out_file": "/var/log/eci-hrm/out.log",
+      "merge_logs": true,
+      "autorestart": true,
+      "max_restarts": 10,
+      "restart_delay": 5000,
+      "max_memory_restart": "512M",
+      "kill_timeout": 10000,
+      "listen_timeout": 10000,
+      "shutdown_with_message": true
+    }
+  ]
+}

@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECI HRM Performance Appraisal System - Deployment Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+@page {
+    size: 210mm 297mm;
+    margin: 0;
+}
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 210mm;
+    background: #ffffff;
+    color: #1a1a2e;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+}
+@media screen {
+    html {
+        height: auto;
+        display: flex;
+        justify-content: center;
+        background: #f0f0f0;
+    }
+    body {
+        transform-origin: top center;
+        margin: 20px auto;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    }
+}
+
+/* ═══════════════════════════════════════
+   COVER PAGE
+   ═══════════════════════════════════════ */
+.front-page-doc {
+    width: 210mm;
+    height: 297mm;
+    box-sizing: border-box;
+    break-after: page;
+    overflow: hidden;
+    position: relative;
+    background: #1a3a5c;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 70px;
+}
+.front-page-doc::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.08);
+}
+.front-page-doc::after {
+    content: '';
+    position: absolute;
+    bottom: -120px;
+    left: -60px;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(42,90,140,0.15);
+}
+.front-logo-area {
+    width: 90px;
+    height: 90px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 36px;
+    position: relative;
+    z-index: 1;
+}
+.front-logo-area .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 28pt;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 2px;
+}
+.front-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26pt;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+    line-height: 1.3;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+}
+.front-subtitle {
+    font-size: 14pt;
+    font-weight: 400;
+    color: rgba(255,255,255,0.75);
+    text-align: center;
+    margin-bottom: 56px;
+    position: relative;
+    z-index: 1;
+}
+.front-divider {
+    width: 80px;
+    height: 6px;
+    background: #c41e3a;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+}
+.front-meta {
+    font-size: 10.5pt;
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    line-height: 2;
+    position: relative;
+    z-index: 1;
+}
+.front-confidential {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9pt;
+    font-weight: 600;
+    color: #c41e3a;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+/* ═══════════════════════════════════════
+   MAIN CONTENT
+   ═══════════════════════════════════════ */
+.main-content {
+    padding: 50px 60px 40px 60px;
+}
+
+/* Chapter headers */
+.chapter-header {
+    break-after: avoid;
+    break-inside: avoid;
+    margin-top: 28px;
+}
+.section-tag {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #c41e3a;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    margin-bottom: 6px;
+}
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 19pt;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+.divider {
+    width: 50px;
+    height: 3px;
+    background: #c41e3a;
+    margin-bottom: 18px;
+}
+
+/* Body text */
+.body-text {
+    margin-bottom: 12px;
+    color: #2d2d3a;
+    line-height: 1.7;
+    text-align: justify;
+}
+.body-text strong {
+    color: #1a3a5c;
+    font-weight: 600;
+}
+
+/* Subheadings */
+.sub-heading {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin-top: 20px;
+    margin-bottom: 8px;
+}
+.sub-heading-2 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #2a5a8c;
+    margin-top: 16px;
+    margin-bottom: 6px;
+}
+
+/* Code blocks */
+pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 8.5pt;
+    line-height: 1.55;
+    overflow-x: auto;
+    margin: 10px 0 14px 0;
+    break-inside: avoid;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+pre code {
+    font-family: 'Courier New', Courier, monospace;
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+code {
+    font-family: 'Courier New', Courier, monospace;
+    background: #f1f5f9;
+    color: #c41e3a;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 9pt;
+}
+pre code {
+    background: none;
+    color: #e2e8f0;
+    padding: 0;
+}
+
+/* Lists */
+ul, ol {
+    padding-left: 22px;
+    margin-bottom: 12px;
+}
+li {
+    margin-bottom: 5px;
+    color: #2d2d3a;
+    line-height: 1.65;
+}
+li strong {
+    color: #1a3a5c;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px 0;
+    font-size: 9.5pt;
+    break-inside: avoid;
+}
+thead th {
+    background: #1a3a5c;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+tbody td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #2d2d3a;
+}
+tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+/* Info/callout boxes */
+.info-box {
+    background: #f0f5ff;
+    border-left: 4px solid #2a5a8c;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+}
+.info-box .info-label {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #2a5a8c;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+.info-box p {
+    margin: 0;
+    color: #2d2d3a;
+    font-size: 9.5pt;
+    line-height: 1.6;
+}
+
+.warning-box {
+    background: #fff5f5;
+    border-left: 4px solid #c41e3a;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+}
+.warning-box .warning-label {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #c41e3a;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+.warning-box p {
+    margin: 0;
+    color: #2d2d3a;
+    font-size: 9.5pt;
+    line-height: 1.6;
+}
+
+/* Checklist items */
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    break-inside: avoid;
+    line-height: 1.6;
+}
+.checklist-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    background: #1a3a5c;
+    color: #ffffff;
+    font-size: 8pt;
+    font-weight: 700;
+    border-radius: 50%;
+    margin-right: 10px;
+    margin-top: 2px;
+}
+.checklist-text {
+    color: #2d2d3a;
+    font-size: 10pt;
+    flex: 1;
+}
+
+/* Footer line */
+.footer-note {
+    margin-top: 30px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8.5pt;
+    color: #6b7280;
+    text-align: center;
+}
+
+/* TOC */
+.toc-item {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dotted #d1d5db;
+}
+.toc-num {
+    font-weight: 700;
+    color: #c41e3a;
+    font-size: 10.5pt;
+    min-width: 24px;
+    margin-right: 12px;
+}
+.toc-text {
+    font-weight: 600;
+    color: #1a3a5c;
+    font-size: 10.5pt;
+    flex: 1;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     COVER PAGE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="front-page-doc">
+    <div class="front-logo-area">
+        <div class="logo-text">ECI</div>
+    </div>
+    <div class="front-title">ECI HRM<br>Performance Appraisal System</div>
+    <div class="front-subtitle">Internal Server Deployment Guide</div>
+    <div class="front-divider"></div>
+    <div class="front-meta">
+        Version 1.0 — Production Release<br>
+        June 2025
+    </div>
+    <div class="front-confidential">Confidential — For Internal Use Only</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MAIN CONTENT
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="main-content">
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="chapter-header">
+        <div class="section-tag">Contents</div>
+        <div class="section-title">Table of Contents</div>
+        <div class="divider"></div>
+    </div>
+
+    <div class="toc-item"><span class="toc-num">01</span><span class="toc-text">Server Preparation</span></div>
+    <div class="toc-item"><span class="toc-num">02</span><span class="toc-text">Software &amp; Tools Installation</span></div>
+    <div class="toc-item"><span class="toc-num">03</span><span class="toc-text">Code Deployment</span></div>
+    <div class="toc-item"><span class="toc-num">04</span><span class="toc-text">Process Management</span></div>
+    <div class="toc-item"><span class="toc-num">05</span><span class="toc-text">Reverse Proxy &amp; Access</span></div>
+    <div class="toc-item"><span class="toc-num">06</span><span class="toc-text">Backup &amp; Recovery</span></div>
+    <div class="toc-item"><span class="toc-num">07</span><span class="toc-text">Testing &amp; Verification Checklist</span></div>
+    <div class="toc-item"><span class="toc-num">08</span><span class="toc-text">Production Launch &amp; Maintenance</span></div>
+
+    <!-- ═══════════════════════════════════════════════════
+         CHAPTER 1: SERVER PREPARATION
+         ═══════════════════════════════════════════════════ -->
+    <div class="chapter-header">
+        <div class="section-tag">Chapter 1</div>
+        <div class="section-title">Server Preparation</div>
+        <div class="divider"></div>
+    </div>
+
+    <p class="body-text">
+        Before deploying the ECI HRM Performance Appraisal System, the target server must meet specific hardware and software requirements. This chapter outlines the minimum specifications, operating system options, network configuration steps, and firewall rules necessary to prepare a production-ready environment. Proper server preparation is the foundation of a reliable and performant deployment.
+    </p>
+
+    <div class="sub-heading">1.1 Hardware Requirements</div>
+
+    <p class="body-text">
+        The server must meet the following minimum hardware specifications to ensure smooth operation under typical office loads of 20 to 100 concurrent users. While the application can run on lower specifications for evaluation purposes, production deployments should not compromise on these baseline resources.
+    </p>
+
+    <table>
+        <thead>
+            <tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>CPU</strong></td><td>4 cores (x86_64)</td><td>8 cores (x86_64)</td></tr>
+            <tr><td><strong>RAM</strong></td><td>8 GB DDR4</td><td>16 GB DDR4</td></tr>
+            <tr><td><strong>Storage</strong></td><td>100 GB SSD</td><td>256 GB NVMe SSD</td></tr>
+            <tr><td><strong>Network</strong></td><td>Gigabit Ethernet</td><td>Gigabit Ethernet</td></tr>
+            <tr><td><strong>Backup</strong></td><td>External drive / NAS</td><td>Dedicated NAS with RAID</td></tr>
+        </tbody>
+    </table>
+
+    <p class="body-text">
+        The SSD requirement is particularly important. PostgreSQL performs significantly better on SSD storage compared to traditional HDDs, especially for concurrent read/write operations during appraisal cycles when multiple users are simultaneously accessing the system. For organizations expecting heavy usage or planning to store uploaded documents (evidence files, review attachments), allocate at least 256 GB of storage.
+    </p>
+
+    <div class="sub-heading">1.2 Operating System Options</div>
+
+    <p class="body-text">
+        The ECI HRM system supports deployment on both Linux and Windows platforms. The following operating systems have been tested and are fully supported for production use. Select the platform that best matches your organization's existing infrastructure and the skill set of your IT team.
+    </p>
+
+    <table>
+        <thead>
+            <tr><th>Platform</th><th>OS</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Linux</strong></td><td>Ubuntu 22.04 LTS / 24.04 LTS</td><td>Recommended</td></tr>
+            <tr><td><strong>Linux</strong></td><td>Debian 12 (Bookworm)</td><td>Supported</td></tr>
+            <tr><td><strong>Windows</strong></td><td>Windows Server 2019 / 2022</td><td>Supported</td></tr>
+            <tr><td><strong>Windows</strong></td><td>Windows 10 Pro / 11 Pro</td><td>Supported</td></tr>
+        </tbody>
+    </table>
+
+    <p class="body-text">
+        <strong>Ubuntu Server 22.04 LTS or 24.04 LTS</strong> is the recommended platform. It offers long-term support, excellent PostgreSQL performance, native support for PM2 process management, and Nginx reverse proxy capabilities. Most of the commands in this guide are written with Ubuntu in mind, though equivalent Windows instructions are provided for every critical step.
+    </p>
+    <p class="body-text">
+        Windows deployments use IIS (Internet Information Services) with the Application Request Routing (ARR) module as the reverse proxy, and NSSM (Non-Sucking Service Manager) for process management. While fully functional, the Windows path requires additional configuration steps and is better suited for organizations that lack Linux administration expertise.
+    </p>
+
+    <div class="sub-heading">1.3 Static IP Configuration</div>
+
+    <p class="body-text">
+        The server must be assigned a static local IP address so that office workstations can reliably connect to it. A DHCP reservation is also acceptable, but a manually configured static IP is preferred for simplicity and predictability. The IP address should be outside the DHCP pool range to avoid conflicts.
+    </p>
+
+    <p class="body-text"><strong>Linux (Ubuntu) — Netplan Configuration:</strong></p>
+    <p class="body-text">
+        On Ubuntu, network configuration is managed through Netplan. Edit the appropriate YAML file in <code>/etc/netplan/</code> and set a static address. The following example configures the server with IP address <code>192.168.1.50</code>:
+    </p>
+    <pre><code># /etc/netplan/01-static-ip.yaml
+network:
+  version: 2
+  ethernets:
+    eth0:
+      dhcp4: no
+      addresses:
+        - 192.168.1.50/24
+      routes:
+        - to: default
+          via: 192.168.1.1
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1]</code></pre>
+    <p class="body-text">
+        Apply the configuration with <code>sudo netplan apply</code> and verify connectivity with <code>ip addr show eth0</code>. Ensure you can ping the gateway and external addresses before proceeding.
+    </p>
+
+    <p class="body-text"><strong>Windows — Static IP via GUI:</strong></p>
+    <p class="body-text">
+        On Windows, open <strong>Control Panel &gt; Network and Sharing Center &gt; Change adapter settings</strong>. Right-click the active network adapter, select <strong>Properties</strong>, then <strong>Internet Protocol Version 4 (TCP/IPv4)</strong>. Enter the static IP, subnet mask (typically <code>255.255.255.0</code>), default gateway, and DNS servers. Click OK to apply and verify with <code>ipconfig /all</code> in a Command Prompt.
+    </p>
+
+    <div class="sub-heading">1.4 Network Topology</div>
+
+    <p class="body-text">
+        The recommended network topology follows a simple and reliable pattern. The ECI HRM server connects directly to the office network switch using a Gigabit Ethernet cable. All office PCs connect to the same switch, enabling local network access without requiring internet connectivity. This air-gapped approach ensures maximum data security for sensitive employee performance data.
+    </p>
+    <p class="body-text">
+        The network flow is: <strong>Office PCs &harr; Network Switch &harr; ECI HRM Server</strong>. Each workstation accesses the system through a browser at <code>http://hrm.eci.local</code>. DNS resolution is handled either by the office DNS server (preferred) or by adding a hosts file entry on each workstation. For organizations with a dedicated DNS server, create an A record mapping <code>hrm.eci.local</code> to the server's static IP. For smaller offices without DNS infrastructure, add an entry to the Windows hosts file at <code>C:\Windows\System32\drivers\etc\hosts</code> on each PC.
+    </p>
+
+    <div class="sub-heading">1.5 Firewall Configuration</div>
+
+    <p class="body-text">
+        The server firewall must allow traffic on the following ports for the system to function correctly. Restrict access to the office network subnet where possible to enhance security. Do not expose these ports to the public internet under any circumstances.
+    </p>
+
+    <table>
+        <thead>
+            <tr><th>Port</th><th>Service</th><th>Purpose</th><th>Access</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>3000</strong></td><td>Node.js (Next.js)</td><td>Application server</td><td>Localhost only</td></tr>
+            <tr><td><strong>5432</strong></td><td>PostgreSQL</td><td>Database server</td><td>Localhost only</td></tr>
+            <tr><td><strong>80</strong></td><td>Nginx / IIS</td><td>Reverse proxy (HTTP)</td><td>Office subnet</td></tr>
+            <tr><td><strong>443</strong></td><td>Nginx (optional)</td><td>Reverse proxy (HTTPS)</td><td>Office subnet</td></tr>
+        </tbody>
+    </table>
+
+    <p class="body-text"><strong>Linux (UFW):</strong></p>
+    <pre><code>sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow from 192.168.1.0/24 to any port 80
+sudo ufw allow from 192.168.1.0/24 to any port 443
+sudo ufw allow 3000/tcp    # localhost only (bound to 127.0.0.1)
+sudo ufw allow 5432/tcp    # localhost only (bound to 127.0.0.1)
+sudo ufw enable
+sudo ufw status verbose</code></pre>
+
+    <p class="body-text"><strong>Windows Firewall:</strong></p>
+    <pre><code># Allow HTTP from office subnet
+New-NetFirewallRule -DisplayName "ECI-HRM HTTP" `
+    -Direction Inbound -Protocol TCP -LocalPort 80 `
+    -RemoteAddress 192.168.1.0/24 -Action Allow
+
+# Allow HTTPS (optional)
+New-NetFirewallRule -DisplayName "ECI-HRM HTTPS" `
+    -Direction Inbound -Protocol TCP -LocalPort 443 `
+    -RemoteAddress 192.168.1.0/24 -Action Allow</code></pre>
+
+    <div class="warning-box">
+        <div class="warning-label">Important</div>
+        <p>Ports 3000 (Node.js) and 5432 (PostgreSQL) should <strong>only</strong> listen on <code>127.0.0.1</code> (localhost). They must never be exposed to the network directly. All external traffic must flow through the reverse proxy (Nginx or IIS) on port 80.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         CHAPTER 2: SOFTWARE & TOOLS INSTALLATION
+         ═══════════════════════════════════════════════════ -->
+    <div class="chapter-header">
+        <div class="section-tag">Chapter 2</div>
+        <div class="section-title">Software &amp; Tools Installation</div>
+        <div class="divider"></div>
+    </div>
+
+    <p class="body-text">
+        This chapter covers the installation of all required software components on the server. Each tool serves a specific role in the deployment stack: Node.js runs the application, PostgreSQL stores the data, Git retrieves the source code, PM2 (or NSSM) manages the process, and Nginx (or IIS) acts as the reverse proxy. Follow the instructions for your chosen platform carefully, verifying each step before proceeding to the next.
+    </p>
+
+    <div class="sub-heading">2.1 Node.js 22.x LTS Installation</div>
+
+    <p class="body-text">
+        Node.js is the JavaScript runtime that powers the Next.js application. The Long-Term Support (LTS) version 22.x provides stability and security updates for an extended period. Always install the LTS version rather than the latest feature release to ensure production reliability.
+    </p>
+
+    <p class="body-text"><strong>Linux (Ubuntu) — via NodeSource:</strong></p>
+    <pre><code># Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Install Node.js 22.x LTS via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Verify installation
+node --version    # Expected: v22.x.x
+npm --version     # Expected: 10.x.x</code></pre>
+
+    <p class="body-text"><strong>Windows — via MSI Installer:</strong></p>
+    <p class="body-text">
+        Download the Node.js 22.x LTS MSI installer from <code>https://nodejs.org</code>. Run the installer and accept all default options. The MSI installer automatically adds Node.js and npm to the system PATH. Verify the installation by opening a new Command Prompt and running <code>node --version</code> and <code>npm --version</code>. If the commands are not recognized, restart the terminal or log out and back in to refresh the PATH environment variable.
+    </p>
+
+    <div class="sub-heading">2.2 PostgreSQL 16 Installation and Configuration</div>
+
+    <p class="body-text">
+        PostgreSQL is the production database for the ECI HRM system. While the development environment uses SQLite for simplicity, PostgreSQL provides the concurrency, reliability, and data integrity required for multi-user production deployments. PostgreSQL 16 is the recommended version, though PostgreSQL 15 is also fully compatible.
+    </p>
+
+    <p class="body-text"><strong>Linux (Ubuntu):</strong></p>
+    <pre><code># Add PostgreSQL APT repository
+sudo apt install -y wget gnupg2 lsb-release
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt \
+  $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+  | sudo apt-key add -
+
+# Install PostgreSQL 16
+sudo apt update
+sudo apt install -y postgresql-16
+
+# Start and enable the service
+sudo systemctl start postgresql
+sudo systemctl enable postgresql</code></pre>
+
+    <p class="body-text"><strong>Windows:</strong></p>
+    <p class="body-text">
+        Download the PostgreSQL 16 installer from <code>https://www.postgresql.org/download/windows/</code>. Run the installer and accept the default installation directory. During setup, set the superuser (postgres) password to a strong value and record it securely. Leave the default port (5432) unchanged. Ensure the "Stack Builder" option is unchecked unless you need additional tools.
+    </p>
+
+    <p class="body-text"><strong>Create Database and User:</strong></p>
+    <pre><code># Connect to PostgreSQL as superuser
+sudo -u postgres psql
+
+# Inside the PostgreSQL shell:
+CREATE DATABASE eci_hrm;
+CREATE USER hrm_user WITH PASSWORD 'YOUR_STRONG_PASSWORD_HERE';
+GRANT ALL PRIVILEGES ON DATABASE eci_hrm TO hrm_user;
+
+# Connect to the new database and grant schema permissions
+\c eci_hrm
+GRANT ALL ON SCHEMA public TO hrm_user;
+
+# Exit
+\q</code></pre>
+
+    <div class="info-box">
+        <div class="info-label">Security Note</div>
+        <p>Replace <code>YOUR_STRONG_PASSWORD_HERE</code> with a strong password (minimum 16 characters, mixed case, numbers, and special characters). This same password will be used in the <code>.env</code> file and <code>ecosystem.config.json</code>. Never use default or weak passwords in production.</p>
+    </div>
+
+    <div class="sub-heading">2.3 Git Installation</div>
+
+    <p class="body-text">
+        Git is required to clone the application repository from the code server. On Ubuntu, Git is typically pre-installed. If not, install it with <code>sudo apt install -y git</code>. On Windows, download the installer from <code>https://git-scm.com/download/win</code> and use the default options. Verify with <code>git --version</code> after installation.
+    </p>
+
+    <div class="sub-heading">2.4 PM2 Installation (Linux) / NSSM (Windows)</div>
+
+    <p class="body-text">
+        A process manager ensures the Node.js application runs continuously, automatically restarts after crashes or server reboots, and provides log management capabilities.
+    </p>
+
+    <p class="body-text"><strong>Linux — PM2:</strong></p>
+    <pre><code># Install PM2 globally
+sudo npm install -g pm2
+
+# Verify
+pm2 --version</code></pre>
+    <p class="body-text">
+        PM2 is a production-grade process manager for Node.js. It supports auto-restart on crash, log rotation, monitoring, and startup script generation. It is the recommended choice for Linux deployments and will be configured in Chapter 4.
+    </p>
+
+    <p class="body-text"><strong>Windows — NSSM:</strong></p>
+    <p class="body-text">
+        Download NSSM from <code>https://nssm.cc/download</code>. Extract the ZIP archive and copy <code>nssm.exe</code> to a location in your system PATH (e.g., <code>C:\Windows\System32</code> or a dedicated tools directory added to PATH). NSSM wraps any command-line executable as a Windows Service, providing automatic startup and crash recovery equivalent to PM2 on Linux.
+    </p>
+
+    <div class="sub-heading">2.5 Nginx Installation (Linux) / IIS with ARR (Windows)</div>
+
+    <p class="body-text">
+        The reverse proxy sits in front of the Node.js application, handling HTTP requests from office workstations and forwarding them to the application on port 3000. It also provides security headers, gzip compression, and static file caching.
+    </p>
+
+    <p class="body-text"><strong>Linux — Nginx:</strong></p>
+    <pre><code>sudo apt install -y nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+sudo systemctl status nginx</code></pre>
+
+    <p class="body-text"><strong>Windows — IIS with ARR Module:</strong></p>
+    <p class="body-text">
+        Open <strong>Server Manager &gt; Manage &gt; Add Roles and Features</strong>. Select "Web Server (IIS)" role. Under Role Services, ensure "Common HTTP Features", "Security", and "Performance" are all checked. After IIS is installed, download and install the <strong>Application Request Routing (ARR)</strong> module from the official Microsoft IIS website. Open IIS Manager, select the server node, double-click "Application Request Routing Cache", and choose "Server Proxy Settings" from the right-hand actions panel. Enable proxy functionality by checking "Enable proxy".
+    </p>
+
+    <div class="sub-heading">2.6 Application Directory Structure</div>
+
+    <p class="body-text">
+        Create the application directory before cloning the repository. The directory should have appropriate ownership and permissions.
+    </p>
+
+    <p class="body-text"><strong>Linux:</strong></p>
+    <pre><code># Create application directory
+sudo mkdir -p /opt/eci-hrm
+sudo chown $USER:$USER /opt/eci-hrm
+
+# Create log directory
+sudo mkdir -p /var/log/eci-hrm
+sudo chown $USER:$USER /var/log/eci-hrm</code></pre>
+
+    <p class="body-text"><strong>Windows:</strong></p>
+    <pre><code># Create application directory (run in Command Prompt as Administrator)
+mkdir C:\ECI-HRM
+mkdir C:\ECI-HRM\logs</code></pre>
+
+    <!-- ═══════════════════════════════════════════════════
+         CHAPTER 3: CODE DEPLOYMENT
+         ═══════════════════════════════════════════════════ -->
+    <div class="chapter-header">
+        <div class="section-tag">Chapter 3</div>
+        <div class="section-title">Code Deployment</div>
+        <div class="divider"></div>
+    </div>
+
+    <p class="body-text">
+        This chapter covers the complete code deployment workflow: cloning the repository, installing dependencies, configuring the environment, switching the database provider from SQLite to PostgreSQL, building the production bundle, seeding the initial data, and verifying the build output. Each step must be completed in order, and every command should be verified before moving forward. Errors at this stage often stem from missing dependencies, incorrect environment variables, or database connection issues.
+    </p>
+
+    <div class="sub-heading">3.1 Clone the Repository</div>
+    <pre><code>cd /opt/eci-hrm
+git clone https://github.com/ECI-HRM/HRM.git .
+# Note the "." at the end clones directly into the current directory</code></pre>
+    <p class="body-text">
+        If the repository is private, ensure the deploying user has SSH key or personal access token authentication configured. For organizations using an internal Git server (GitLab, Gitea), replace the URL accordingly. Verify the clone by checking that the <code>package.json</code>, <code>prisma/</code>, and <code>src/</code> directories exist.
+    </p>
+
+    <div class="sub-heading">3.2 Install Dependencies</div>
+    <pre><code>cd /opt/eci-hrm
+npm install</code></pre>
+    <p class="body-text">
+        This command reads <code>package.json</code> and installs all required Node.js modules into the <code>node_modules/</code> directory. On a fresh server with a good internet connection, this typically takes two to five minutes. If you encounter permission errors on Linux, ensure the <code>/opt/eci-hrm</code> directory is owned by the deploying user. If the install fails due to network issues, check proxy settings or try using an npm registry mirror.
+    </p>
+
+    <div class="sub-heading">3.3 Configure Environment Variables</div>
+    <p class="body-text">
+        Copy the example environment file and edit it with your production-specific values. The <code>.env</code> file contains all configuration that the application needs at runtime, including the database connection string, admin credentials, and the application URL.
+    </p>
+    <pre><code># Copy the example file
+cp .env.example .env
+
+# Edit with your preferred editor
+nano .env</code></pre>
+    <p class="body-text">
+        Configure the following values in the <code>.env</code> file. Every value must be set correctly; do not leave any placeholder values unchanged.
+    </p>
+    <pre><code># Database connection (PostgreSQL)
+DATABASE_URL="postgresql://hrm_user:YOUR_STRONG_PASSWORD@localhost:5432/eci_hrm?schema=public"
+
+# Admin account (created during seed)
+ADMIN_EMAIL=imunir@eci.com.pk
+ADMIN_NAME=Muhammad Unir
+ADMIN_PASSWORD=ECI@dm1n#2025!Secure
+ADMIN_EMPLOYEE_ID=ECI-001
+
+# Application URL (must match what users type in their browser)
+NEXT_PUBLIC_APP_URL=http://hrm.eci.local
+
+# Environment mode
+NODE_ENV=production</code></pre>
+
+    <div class="warning-box">
+        <div class="warning-label">Critical</div>
+        <p>The default admin password <code>ECI@dm1n#2025!Secure</code> must be changed immediately after the first login. Do not skip this step. Also, ensure the <code>DATABASE_URL</code> password matches exactly what you set when creating the PostgreSQL user in Chapter 2.</p>
+    </div>
+
+    <div class="sub-heading">3.4 Switch Prisma Schema to PostgreSQL</div>
+    <p class="body-text">
+        The development version of the application uses SQLite for convenience. For production, the database provider must be changed to PostgreSQL. Open the <code>prisma/schema.prisma</code> file and modify the <code>datasource</code> block as follows:
+    </p>
+    <pre><code># prisma/schema.prisma — BEFORE (development)
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+# prisma/schema.prisma — AFTER (production)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}</code></pre>
+    <p class="body-text">
+        Only the <code>provider</code> line needs to change from <code>"sqlite"</code> to <code>"postgresql"</code>. The <code>url</code> line remains unchanged because it references the <code>DATABASE_URL</code> environment variable, which now points to PostgreSQL. Save the file after making this change.
+    </p>
+
+    <div class="sub-heading">3.5 Generate Prisma Client and Push Schema</div>
+    <pre><code># Generate the Prisma client for PostgreSQL
+npx prisma generate
+
+# Push the schema to the database (creates all tables)
+npx prisma db push</code></pre>
+    <p class="body-text">
+        The <code>prisma generate</code> command creates the Prisma Client library optimized for PostgreSQL. The <code>prisma db push</code> command reads the schema file and creates (or updates) all required tables, columns, indexes, and relations in the PostgreSQL database. If the database is empty, this creates the entire schema from scratch. If tables already exist, it applies any new migrations or changes incrementally without data loss.
+    </p>
+    <p class="body-text">
+        Verify the schema was applied successfully by checking the output for "Your database is now in sync with your Prisma schema" or a similar confirmation message. If you see errors about missing extensions or permissions, revisit the PostgreSQL user permissions from Chapter 2.
+    </p>
+
+    <div class="sub-heading">3.6 Build the Production Bundle</div>
+    <pre><code># Build the Next.js production bundle
+npm run build</code></pre>
+    <p class="body-text">
+        This command compiles the entire application, optimizes assets, and generates the production-ready output in the <code>.next/</code> directory. The build process typically takes three to eight minutes depending on the server's CPU and RAM. The output should indicate "Build completed successfully" without any errors or warnings about missing modules. The <code>next.config.ts</code> file is configured to output a standalone server, which means the production build is self-contained and does not require the full <code>node_modules</code> directory to run.
+    </p>
+
+    <div class="sub-heading">3.7 Copy Static Files</div>
+    <pre><code># Copy static assets into the standalone build
+cp -r .next/static .next/standalone/.next/</code></pre>
+    <p class="body-text">
+        The standalone build produced by Next.js requires the static assets (images, fonts, CSS) to be manually copied into the standalone directory. This is a known requirement of Next.js standalone output mode. Without this step, the application will serve but all static assets (including the ECI logo and application styling) will return 404 errors. On Windows, the equivalent command is <code>xcopy .next\static .next\standalone\.next\static /E /I</code>.
+    </p>
+
+    <div class="sub-heading">3.8 Production Seed (Admin Account and Master Data)</div>
+    <pre><code># Seed ONLY production data (admin account + master data, NO demo users)
+curl -X POST "http://localhost:3000/api/seed?mode=production"</code></pre>
+    <p class="body-text">
+        The production seed creates the essential data required for the system to function, and critically, it does <strong>not</strong> create any demo or test user accounts. The following items are created by the production seed:
+    </p>
+    <ul>
+        <li><strong>1 Admin Account:</strong> Email: <code>imunir@eci.com.pk</code>, Name: Muhammad Unir, Employee ID: ECI-001, Password: <code>ECI@dm1n#2025!Secure</code></li>
+        <li><strong>3 Rating Scales:</strong> Standard 5-point rating scale used across all appraisal forms for consistent evaluation</li>
+        <li><strong>22 Appraisal Categories:</strong> Pre-configured evaluation criteria covering goals, competencies, and behavioral indicators</li>
+    </ul>
+    <p class="body-text">
+        The seed endpoint must be called while the application is running (either in development mode via <code>npm run dev</code> or in production mode via PM2/NSSM). If you have already started the process manager, use the running server URL. If not, start the server temporarily with <code>node .next/standalone/server.js</code> in a separate terminal, run the seed command, and then stop the temporary server with Ctrl+C.
+    </p>
+
+    <div class="info-box">
+        <div class="info-label">Note</div>
+        <p>After seeding, log in with the admin account and <strong>immediately change the default password</strong>. The admin can then create departments, designations, employees, and configure the first appraisal cycle from within the application's admin dashboard.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         CHAPTER 4: PROCESS MANAGEMENT
+         ═══════════════════════════════════════════════════ -->
+    <div class="chapter-header">
+        <div class="section-tag">Chapter 4</div>
+        <div class="section-title">Process Management</div>
+        <div class="divider"></div>
+    </div>
+
+    <p class="body-text">
+        Process management ensures the ECI HRM application runs continuously as a background service, automatically recovers from crashes, and starts automatically when the server reboots. Without a process manager, a terminal session that is accidentally closed would terminate the application, causing downtime. This chapter covers configuration for both PM2 on Linux and NSSM on Windows, including auto-restart on boot, log management, and monitoring commands.
+    </p>
+
+    <div class="sub-heading">4.1 Linux Process Management with PM2</div>
+
+    <p class="body-text">
+        The project includes a pre-configured <code>ecosystem.config.json</code> file that defines how PM2 should run the application. This file specifies the script path, environment variables, log file locations, restart policies, and memory limits. Before using it, update the <code>DATABASE_URL</code> in the ecosystem file to match your production password.
+    </p>
+
+    <p class="body-text"><strong>Start the Application:</strong></p>
+    <pre><code>cd /opt/eci-hrm
+pm2 start ecosystem.config.json</code></pre>
+    <p class="body-text">
+        PM2 reads the <code>ecosystem.config.json</code> file and starts the application with all configured settings. Verify it is running with <code>pm2 status</code>, which should show the <code>eci-hrm</code> process in "online" state. If the status shows "errored" or "stopped", check the logs with <code>pm2 logs eci-hrm --lines 50</code> for error details. Common startup issues include incorrect DATABASE_URL, missing static files, or port 3000 already in use.
+    </p>
+
+    <p class="body-text"><strong>Configure Auto-Restart on Server Boot:</strong></p>
+    <pre><code># Save the current process list
+pm2 save
+
+# Generate and install the startup script
+pm2 startup
+
+# The command above outputs a sudo command. Copy and run it:
+# Example output: sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup...
+# Run that exact sudo command as instructed.</code></pre>
+    <p class="body-text">
+        The <code>pm2 startup</code> command generates a system service script specific to your init system (systemd on Ubuntu 22.04/24.04). Running the generated sudo command registers PM2 as a system service, so it starts automatically when the server boots and respawns the application. The <code>pm2 save</code> command persists the current process list to disk so PM2 knows which processes to restore after a reboot.
+    </p>
+
+    <p class="body-text"><strong>Monitoring and Logs:</strong></p>
+    <pre><code># View real-time logs (Ctrl+C to exit)
+pm2 logs eci-hrm
+
+# Open the monitoring dashboard
+pm2 monit
+
+# Check process status
+pm2 status
+
+# View detailed process info
+pm2 show eci-hrm
+
+# Restart the application (after config changes)
+pm2 restart eci-hrm
+
+# Stop the application
+pm2 stop eci-hrm
+
+# Delete the process from PM2 (use with caution)
+pm2 delete eci-hrm</code></pre>
+    <p class="body-text">
+        The <code>pm2 monit</code> command opens a real-time terminal dashboard showing CPU usage, memory consumption, and log output. It is invaluable for diagnosing performance issues. The <code>pm2 logs</code> command streams both stdout and stderr logs to the terminal. Log files are also written to <code>/var/log/eci-hrm/out.log</code> and <code>/var/log/eci-hrm/error.log</code> as configured in <code>ecosystem.config.json</code>.
+    </p>
+
+    <div class="sub-heading">4.2 Windows Process Management with NSSM</div>
+
+    <p class="body-text">
+        On Windows, NSSM (Non-Sucking Service Manager) wraps the Node.js process as a Windows Service. This provides the same benefits as PM2: automatic startup on boot, crash recovery, and integration with Windows Service management tools. The following commands should be run in an elevated Command Prompt (Run as Administrator).
+    </p>
+
+    <p class="body-text"><strong>Install and Configure the Service:</strong></p>
+    <pre><code># Install the service
+nssm install ECI-HRM "C:\Program Files\nodejs\node.exe"
+
+# Set the application parameters
+nssm set ECI-HRM AppParameters "C:\ECI-HRM\.next\standalone\server.js"
+
+# Set the working directory
+nssm set ECI-HRM AppDirectory "C:\ECI-HRM"
+
+# Set environment variables
+nssm set ECI-HRM AppEnvironmentExtra NODE_ENV=production
+nssm set ECI-HRM AppEnvironmentExtra PORT=3000
+nssm set ECI-HRM AppEnvironmentExtra HOSTNAME=0.0.0.0
+nssm set ECI-HRM AppEnvironmentExtra DATABASE_URL=postgresql://hrm_user:YOUR_PASSWORD@localhost:5432/eci_hrm?schema=public
+nssm set ECI-HRM AppEnvironmentExtra ADMIN_EMAIL=imunir@eci.com.pk
+nssm set ECI-HRM AppEnvironmentExtra ADMIN_NAME=Muhammad Unir
+nssm set ECI-HRM AppEnvironmentExtra ADMIN_PASSWORD=ECI@dm1n#2025!Secure
+nssm set ECI-HRM AppEnvironmentExtra ADMIN_EMPLOYEE_ID=ECI-001
+nssm set ECI-HRM AppEnvironmentExtra NEXT_PUBLIC_APP_URL=http://hrm.eci.local
+
+# Configure auto-start and restart
+nssm set ECI-HRM Start SERVICE_AUTO_START
+nssm set ECI-HRM AppStdout "C:\ECI-HRM\logs\out.log"
+nssm set ECI-HRM AppStderr "C:\ECI-HRM\logs\error.log"
+
+# Create logs directory
+mkdir C:\ECI-HRM\logs
+
+# Start the service
+nssm start ECI-HRM</code></pre>
+    <p class="body-text">
+        After starting the service, verify it is running with <code>nssm status ECI-HRM</code> (should return "SERVICE_RUNNING") or by checking the Windows Services console (<code>services.msc</code>). You can also open <code>http://localhost:3000</code> in a browser on the server to confirm the application is responding. To view logs, check the files in <code>C:\ECI-HRM\logs\</code>. To restart the service after configuration changes, use <code>nssm restart ECI-HRM</code>.
+    </p>
+    <p class="body-text">
+        NSSM also provides a GUI configuration tool. Run <code>nssm install ECI-HRM</code> without command-line parameters to open the GUI, where you can set all fields through a visual interface. This can be helpful for administrators who prefer GUI-based configuration.
+    </p>
+
+    <!-- ═══════════════════════════════════════════════════
+         CHAPTER 5: REVERSE PROXY & ACCESS
+         ═══════════════════════════════════════════════════ -->
+    <div class="chapter-header">
+        <div class="section-tag">Chapter 5</div>
+        <div class="section-title">Reverse Proxy &amp; Access</div>
+        <div class="divider"></div>
+    </div>
+
+    <p class="body-text">
+        The reverse proxy is the entry point for all user traffic. It listens on port 80 (HTTP) or port 443 (HTTPS) and forwards requests to the Node.js application running on port 3000. This architecture provides several advantages: the application does not need to run as root to bind to port 80, the proxy handles SSL termination for HTTPS, and security headers and compression are applied uniformly. This chapter covers Nginx configuration for Linux and IIS configuration for Windows, along with DNS setup for the <code>hrm.eci.local</code> hostname.
+    </p>
+
+    <div class="sub-heading">5.1 Linux — Nginx Reverse Proxy Configuration</div>
+
+    <p class="body-text">
+        The project includes a pre-configured Nginx configuration file at <code>deploy/nginx-eci-hrm.conf</code>. This file is production-ready and includes security headers, gzip compression, WebSocket support, static file caching, and proper proxy headers. Follow these steps to deploy it:
+    </p>
+
+    <pre><code># Copy the configuration file to Nginx sites-available
+sudo cp /opt/eci-hrm/deploy/nginx-eci-hrm.conf /etc/nginx/sites-available/eci-hrm
+
+# Create a symbolic link to enable the site
+sudo ln -s /etc/nginx/sites-available/eci-hrm /etc/nginx/sites-enabled/
+
+# Remove the default Nginx site (optional but recommended)
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Test the Nginx configuration for syntax errors
+sudo nginx -t
+
+# If the test passes, reload Nginx
+sudo systemctl reload nginx</code></pre>
+
+    <p class="body-text">
+        The <code>nginx -t</code> command validates the configuration syntax. If it reports errors, review the configuration file path and content. The most common issue is a missing semicolon or an incorrect <code>server_name</code> directive. After a successful reload, the application should be accessible at <code>http://hrm.eci.local</code> from any workstation on the network (once DNS is configured).
+    </p>
+
+    <div class="sub-heading">5.2 DNS Configuration</div>
+
+    <p class="body-text">
+        For office workstations to access the system via <code>http://hrm.eci.local</code>, the hostname must resolve to the server's IP address. There are two approaches depending on your network infrastructure:
+    </p>
+    <p class="body-text">
+        <strong>Option A — DNS Server (Recommended):</strong> If your office has a DNS server (Windows Server DNS, dnsmasq, or a router with DNS capabilities), create an A record mapping <code>hrm.eci.local</code> to the server's static IP (e.g., <code>192.168.1.50</code>). This is the preferred method because it works for all workstations without any per-machine configuration.
+    </p>
+    <p class="body-text">
+        <strong>Option B — Hosts File:</strong> If no DNS server is available, add an entry to the hosts file on each workstation. On Windows, edit <code>C:\Windows\System32\drivers\etc\hosts</code> (open as Administrator in Notepad). On Linux/macOS, edit <code>/etc/hosts</code>. Add the following line:
+    </p>
+    <pre><code>192.168.1.50    hrm.eci.local</code></pre>
+    <p class="body-text">
+        Replace <code>192.168.1.50</code> with your server's actual static IP. After saving the hosts file, flush the DNS cache with <code>ipconfig /flushdns</code> (Windows) or <code>sudo systemd-resolve --flush-caches</code> (Ubuntu).
+    </p>
+
+    <div class="sub-heading">5.3 Optional HTTPS with Self-Signed Certificate</div>
+
+    <p class="body-text">
+        For internal deployments, HTTPS is optional but recommended if the organization handles sensitive performance data. A self-signed certificate encrypts traffic between workstations and the server, preventing network sniffing. Note that self-signed certificates will trigger browser warnings; users must accept the certificate once to proceed.
+    </p>
+    <pre><code># Create SSL directory
+sudo mkdir -p /etc/nginx/ssl
+
+# Generate a self-signed certificate (valid for 365 days)
+sudo openssl req -x509 -nodes -days 365 \
+  -newkey rsa:2048 \
+  -keyout /etc/nginx/ssl/eci-hrm.key \
+  -out /etc/nginx/ssl/eci-hrm.crt \
+  -subj "/C=PK/ST=Punjab/L=Lahore/O=ECI Pvt Ltd/CN=hrm.eci.local"
+
+# Uncomment the HTTPS server block in the Nginx config
+sudo nano /etc/nginx/sites-available/eci-hrm
+
+# Test and reload
+sudo nginx -t && sudo systemctl reload nginx</code></pre>
+    <p class="body-text">
+        After enabling HTTPS, update <code>NEXT_PUBLIC_APP_URL</code> in the <code>.env</code> file and <code>ecosystem.config.json</code> to <code>https://hrm.eci.local</code>, then restart the application with <code>pm2 restart eci-hrm</code>. Also configure Nginx to redirect all HTTP traffic to HTTPS by adding a <code>return 301 https://$host$request_uri;</code> directive in the HTTP server block.
+    </p>
+
+    <div class="sub-heading">5.4 Windows — IIS Reverse Proxy Configuration</div>
+
+    <p class="body-text">
+        On Windows Server, IIS serves as the reverse proxy using the Application Request Routing (ARR) module. Follow these steps to configure IIS for the ECI HRM system:
+    </p>
+    <ol>
+        <li>Open <strong>IIS Manager</strong> (<code>inetmgr</code>)</li>
+        <li>Right-click <strong>Sites</strong> &gt; <strong>Add Website</strong></li>
+        <li>Site name: <code>ECI-HRM</code></li>
+        <li>Physical path: <code>C:\inetpub\wwwroot\hrm.eci.local</code> (create this empty directory first)</li>
+        <li>Host name: <code>hrm.eci.local</code></li>
+        <li>Click OK to create the site</li>
+    </ol>
+    <pre><code># Create the site root directory
+mkdir C:\inetpub\wwwroot\hrm.eci.local
+
+# Copy the web.config file (ARR reverse proxy rules)
+copy C:\ECI-HRM\deploy\iis-web.config C:\inetpub\wwwroot\hrm.eci.local\web.config</code></pre>
+    <p class="body-text">
+        The <code>deploy/iis-web.config</code> file contains URL rewrite rules that proxy all incoming requests to <code>http://localhost:3000</code>. It also includes security headers (X-Frame-Options, X-Content-Type-Options, X-XSS-Protection) and a 50MB request size limit for file uploads. After copying the file, open a browser and navigate to <code>http://hrm.eci.local</code> to verify the proxy is working correctly. If you see a 502 or 503 error, confirm the Node.js service (NSSM) is running and listening on port 3000.
+    </p>
+
+    <!-- ═══════════════════════════════════════════════════
+         CHAPTER 6: BACKUP & RECOVERY
+         ═══════════════════════════════════════════════════ -->
+    <div class="chapter-header">
+        <div class="section-tag">Chapter 6</div>
+        <div class="section-title">Backup &amp; Recovery</div>
+        <div class="divider"></div>
+    </div>
+
+    <p class="body-text">
+        Regular backups are essential for any production system. The ECI HRM system stores critical employee data, performance appraisals, and organizational structure information that would be extremely difficult to reconstruct manually. This chapter establishes a two-tier backup strategy: daily database backups for point-in-time recovery, and weekly full backups that include configuration files and uploaded documents. Both Linux and Windows backup procedures are covered, along with restoration steps.
+    </p>
+
+    <div class="sub-heading">6.1 Daily Database Backup</div>
+
+    <p class="body-text">
+        A daily database backup captures the complete state of the PostgreSQL database. The backup script uses <code>pg_dump</code> with gzip compression to minimize storage usage, and automatically rotates old backups beyond the retention period. The project includes a ready-to-use backup script at <code>deploy/backup-db.sh</code> for Linux and <code>deploy/backup-db.bat</code> for Windows.
+    </p>
+
+    <p class="body-text"><strong>Linux — Schedule with Cron:</strong></p>
+    <pre><code># Make the script executable
+chmod +x /opt/eci-hrm/deploy/backup-db.sh
+
+# Edit crontab for the application user
+crontab -e
+
+# Add this line to run daily at 2:00 AM
+0 2 * * * /opt/eci-hrm/deploy/backup-db.sh >> /var/log/eci-hrm/backup.log 2>&1</code></pre>
+
+    <p class="body-text"><strong>Windows — Schedule with Task Scheduler:</strong></p>
+    <pre><code># Create a scheduled task (run in elevated Command Prompt)
+schtasks /create /tn "ECI-HRM Daily DB Backup" /tr "C:\ECI-HRM\deploy\backup-db.bat" \
+  /sc daily /st 02:00 /ru SYSTEM /rl HIGHEST</code></pre>
+    <p class="body-text">
+        The daily backup script extracts the database password from the <code>.env</code> file, runs <code>pg_dump</code> with the <code>--clean --if-exists --no-owner --no-privileges</code> flags, compresses the output with gzip, and saves it to <code>/opt/eci-hrm/backups/db/</code> with a timestamp filename. Files older than 30 days are automatically deleted. Verify the first backup by checking that a <code>.sql.gz</code> file exists in the backup directory and is non-empty.
+    </p>
+
+    <div class="sub-heading">6.2 Weekly Full Backup</div>
+
+    <p class="body-text">
+        The weekly full backup captures not only the database but also the application configuration files (<code>.env</code>, <code>prisma/</code> schema), public assets (<code>public/</code> directory including the ECI logo), and any uploaded documents. This provides a complete snapshot that can restore the entire application to a working state on a fresh server. The backup script is located at <code>deploy/backup-full.sh</code>.
+    </p>
+
+    <pre><code># Schedule weekly full backup (every Sunday at 3:00 AM)
+# Add to crontab:
+0 3 * * 0 /opt/eci-hrm/deploy/backup-full.sh >> /var/log/eci-hrm/backup.log 2>&1</code></pre>
+    <p class="body-text">
+        The full backup creates a timestamped directory containing three compressed archives: <code>database.sql.gz</code> (the database dump), <code>app-files.tar.gz</code> (configuration and assets), and <code>uploads.tar.gz</code> (uploaded documents, if any). The <code>node_modules/</code>, <code>.next/cache/</code>, and <code>backups/</code> directories are excluded to save space. Weekly backups are retained for 12 weeks (approximately 3 months), after which the oldest directories are automatically removed.
+    </p>
+
+    <div class="sub-heading">6.3 Backup Storage</div>
+
+    <p class="body-text">
+        Backups should never be stored on the same physical drive as the application. In the event of a drive failure, both the application and its backups would be lost. The recommended approach is to copy backup files to a Network Attached Storage (NAS) device, an external USB hard drive, or a second internal drive. For maximum safety, implement the 3-2-1 backup rule: keep three copies of data, on two different media types, with one copy off-site.
+    </p>
+    <pre><code># Example: Sync daily backups to a NAS mount
+# Add to crontab (run after the daily backup):
+30 2 * * * rsync -av --delete /opt/eci-hrm/backups/db/ /mnt/nas/eci-hrm-db/</code></pre>
+
+    <div class="sub-heading">6.4 Restore Procedure</div>
+
+    <p class="body-text">
+        In the event of data loss or corruption, the database can be restored from a backup. The restore process drops and recreates all tables, then imports the data from the backup dump. The following commands assume a Linux environment with an existing PostgreSQL user and database.
+    </p>
+    <pre><code># Restore from a daily database backup
+gunzip < /opt/eci-hrm/backups/db/eci_hrm_2025-06-15_020001.sql.gz \
+  | psql -U hrm_user -d eci_hrm
+
+# If the database itself was dropped, recreate it first:
+sudo -u postgres psql
+  DROP DATABASE eci_hrm;
+  CREATE DATABASE eci_hrm;
+  GRANT ALL PRIVILEGES ON DATABASE eci_hrm TO hrm_user;
+  \q
+
+# Then restore:
+gunzip < backup.sql.gz | psql -U hrm_user -d eci_hrm</code></pre>
+    <p class="body-text">
+        After restoring, verify the data integrity by logging into the application and checking that employees, departments, and appraisal data are present. Run <code>npx prisma db push</code> if the backup is from an older version and the schema has changed. For full backups, extract the <code>app-files.tar.gz</code> archive to restore the <code>.env</code> and <code>prisma/</code> files, then rebuild the application with <code>npm run build</code>.
+    </p>
+
+    <div class="warning-box">
+        <div class="warning-label">Test Your Backups</div>
+        <p>A backup that has never been tested for restoration is not a reliable backup. Schedule a quarterly restore test on a separate server or database instance to verify that backups are complete and uncorrupted. Document the restore procedure and time required so the team is prepared for an actual emergency.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         CHAPTER 7: TESTING & VERIFICATION CHECKLIST
+         ═══════════════════════════════════════════════════ -->
+    <div class="chapter-header">
+        <div class="section-tag">Chapter 7</div>
+        <div class="section-title">Testing &amp; Verification Checklist</div>
+        <div class="divider"></div>
+    </div>
+
+    <p class="body-text">
+        After deploying the ECI HRM system, a thorough testing process is essential to ensure every feature works correctly in the production environment. This chapter provides a comprehensive, sequential checklist that covers the complete appraisal workflow from login through final management approval and employee acknowledgment. Each test item should be verified and checked off before declaring the deployment complete. If any item fails, consult the troubleshooting section in Chapter 8 or review the relevant configuration step from earlier chapters.
+    </p>
+
+    <p class="body-text">
+        The testing process follows the natural order of system usage: starting with authentication, then data setup, followed by the complete appraisal lifecycle, and finally reporting and role-based access verification. Tests should be performed from a workstation on the office network (not from the server itself) to accurately simulate real-world usage conditions.
+    </p>
+
+    <div class="sub-heading">Authentication and Dashboard</div>
+
+    <div class="checklist-item">
+        <span class="checklist-num">1</span>
+        <span class="checklist-text"><strong>Login/Logout:</strong> Navigate to <code>http://hrm.eci.local</code> in a browser. Log in with <code>imunir@eci.com.pk</code> and the default password. Verify the login succeeds, the dashboard loads, and the logout function works correctly. Clear the browser cache between tests if needed.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">2</span>
+        <span class="checklist-text"><strong>Dashboard Rendering:</strong> Confirm the admin dashboard displays all stat cards (total employees, active cycles, pending reviews, completion rate), navigation sidebar, and header with user information. No console errors should appear in the browser developer tools.</span>
+    </div>
+
+    <div class="sub-heading">Master Data Setup</div>
+
+    <div class="checklist-item">
+        <span class="checklist-num">3</span>
+        <span class="checklist-text"><strong>Create Departments:</strong> Navigate to <strong>Master Data &gt; Departments</strong>. Create at least three departments (e.g., Engineering, Finance, Human Resources). Verify they appear in the department list and can be edited or deactivated.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">4</span>
+        <span class="checklist-text"><strong>Create Designations:</strong> Navigate to <strong>Master Data &gt; Designations</strong>. Create at least three designations (e.g., Software Engineer, Senior Accountant, HR Manager). Assign each designation to the appropriate department.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">5</span>
+        <span class="checklist-text"><strong>Create Employees:</strong> Navigate to <strong>Master Data &gt; Employees</strong>. Create several test employees with correct department and designation assignments. For at least one employee, enable the <strong>dual-role supervisor toggle</strong> to allow them to act as both an employee and a supervisor.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">6</span>
+        <span class="checklist-text"><strong>Set Line Manager Relationships:</strong> Assign line managers (supervisors) to employees using the supervisor assignment feature. Verify the reporting structure is displayed correctly in the employee list view.</span>
+    </div>
+
+    <div class="sub-heading">Appraisal Lifecycle</div>
+
+    <div class="checklist-item">
+        <span class="checklist-num">7</span>
+        <span class="checklist-text"><strong>Create and Activate Appraisal Cycle:</strong> Navigate to <strong>Appraisal Cycles</strong>. Create a new cycle with a name, start date, and end date. Click <strong>Activate</strong> — this should auto-assign the cycle to all employees. Verify the cycle status changes to "Active" and assignments are created.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">8</span>
+        <span class="checklist-text"><strong>Employee Self-Assessment:</strong> Log in as a regular employee (not the admin). Navigate to the active appraisal cycle. Fill out the self-assessment form including goals, competencies, and any additional comments. Submit the self-assessment.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">9</span>
+        <span class="checklist-text"><strong>Supervisor Review:</strong> Log in as the assigned supervisor. Navigate to the pending review. Rate the employee on goals and competencies. Add supervisor comments. Submit the review.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">10</span>
+        <span class="checklist-text"><strong>HR Review and Finalization:</strong> Log in as the HR admin. Review the supervisor-submitted appraisal. Finalize the review with any additional HR comments. Confirm the status advances to "Finalized".</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">11</span>
+        <span class="checklist-text"><strong>Management Approval:</strong> If the management role is configured, log in as a management user. Approve the finalized appraisal. Confirm the status changes to "Approved".</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">12</span>
+        <span class="checklist-text"><strong>HR Share with Employee:</strong> As HR admin, share the approved appraisal with the employee. Log in as the employee and <strong>acknowledge</strong> receipt. Confirm the appraisal status shows "Acknowledged".</span>
+    </div>
+
+    <div class="sub-heading">Reports, Notifications, and Role Verification</div>
+
+    <div class="checklist-item">
+        <span class="checklist-num">13</span>
+        <span class="checklist-text"><strong>View Reports and Export Data:</strong> Navigate to the <strong>Reports</strong> section. Verify that appraisal summary reports, employee performance data, and cycle statistics are displayed correctly. Test the export functionality (CSV/Excel) to confirm data downloads properly.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">14</span>
+        <span class="checklist-text"><strong>Check Notification Delivery:</strong> Verify that in-app notifications are generated at each stage transition (cycle assigned, self-assessment due, review submitted, appraisal shared). Check the notification panel for each user role.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">15</span>
+        <span class="checklist-text"><strong>Verify Sidebar Navigation per Role:</strong> Log in as each role type (Admin, HR, Supervisor, Employee, Management) and confirm the sidebar shows only the navigation items appropriate for that role. Admin should see all sections; employees should see only their appraisals and profile.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">16</span>
+        <span class="checklist-text"><strong>Test AI Analysis (if configured):</strong> If an AI API key is configured in the environment variables, test the AI-powered performance analysis feature. Verify it generates meaningful insights and displays them correctly in the appraisal view.</span>
+    </div>
+    <div class="checklist-item">
+        <span class="checklist-num">17</span>
+        <span class="checklist-text"><strong>Verify All Dashboards Load per Role:</strong> Access the dashboard as Admin, Supervisor, Employee, and Management users. Confirm each role-specific dashboard displays the correct stat cards, charts, and quick-action buttons. No JavaScript errors should appear in the browser console.</span>
+    </div>
+
+    <div class="info-box">
+        <div class="info-label">Testing Tip</div>
+        <p>Perform these tests from at least two different workstations to verify network accessibility. If any test fails, document the exact error message, browser console output, and server logs (<code>pm2 logs eci-hrm</code> or <code>C:\ECI-HRM\logs\error.log</code>) before troubleshooting.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         CHAPTER 8: PRODUCTION LAUNCH & MAINTENANCE
+         ═══════════════════════════════════════════════════ -->
+    <div class="chapter-header">
+        <div class="section-tag">Chapter 8</div>
+        <div class="section-title">Production Launch &amp; Maintenance</div>
+        <div class="divider"></div>
+    </div>
+
+    <p class="body-text">
+        After all testing is complete and every checklist item has been verified, the system is ready for production launch. This chapter covers the critical first-day actions (changing the admin password, securing the seed endpoint), establishes a regular maintenance schedule, and provides troubleshooting guidance for the most common issues that may arise during operation. Following these procedures ensures the system remains secure, performant, and reliable throughout its production lifecycle.
+    </p>
+
+    <div class="sub-heading">8.1 First-Day Critical Actions</div>
+
+    <p class="body-text">
+        Before announcing the system to users, complete these mandatory security actions. Failure to perform these steps leaves the system vulnerable to unauthorized access.
+    </p>
+
+    <p class="body-text">
+        <strong>Change the Admin Password:</strong> Log in with the default admin account (<code>imunir@eci.com.pk</code> / <code>ECI@dm1n#2025!Secure</code>) and immediately navigate to the profile or account settings to change the password. Choose a strong password that is not used for any other system. The default password is documented in this guide and must be considered compromised from the moment the guide is distributed.
+    </p>
+
+    <p class="body-text">
+        <strong>Secure the Seed Endpoint:</strong> The <code>/api/seed</code> endpoint should be restricted or removed after the initial production seed is complete. Leaving this endpoint accessible allows anyone with network access to re-seed the database, potentially overwriting production data. Options include removing the route file entirely (<code>src/app/api/seed/route.ts</code>) and rebuilding, or adding authentication middleware to the route so only admin users can access it.
+    </p>
+
+    <div class="sub-heading">8.2 Regular Maintenance Schedule</div>
+
+    <p class="body-text">
+        A proactive maintenance schedule prevents issues before they affect users. The following tasks should be performed at their specified intervals by the designated IT administrator. Document all maintenance activities in a log for audit purposes and historical reference.
+    </p>
+
+    <p class="body-text"><strong>Weekly Tasks:</strong></p>
+    <ul>
+        <li><strong>Check PM2 Logs:</strong> Run <code>pm2 logs eci-hrm --lines 100</code> (Linux) or review <code>C:\ECI-HRM\logs\error.log</code> (Windows). Look for recurring errors, unhandled exceptions, or memory warnings.</li>
+        <li><strong>Review Error Rates:</strong> Monitor Nginx access and error logs at <code>/var/log/nginx/</code>. A spike in 5xx errors indicates application issues that need investigation.</li>
+        <li><strong>Verify Backup Completion:</strong> Confirm that daily backups are being created. Check the backup directory for files with today's timestamp and verify they are non-empty.</li>
+        <li><strong>Check Disk Space:</strong> Ensure the server has at least 20% free disk space. Database files, logs, and backups grow over time. Run <code>df -h</code> (Linux) or check Disk Management (Windows).</li>
+    </ul>
+
+    <p class="body-text"><strong>Monthly Tasks:</strong></p>
+    <ul>
+        <li><strong>Update Dependencies:</strong> Run <code>npm audit</code> to check for known security vulnerabilities in Node.js packages. Review the output and apply patches as recommended. Test thoroughly after any dependency updates.</li>
+        <li><strong>Test Restore Procedure:</strong> Perform a test restoration of the most recent backup on a separate database instance. This verifies both the backup integrity and the restore procedure. Record the time required for restoration.</li>
+        <li><strong>Review Application Logs:</strong> Scan the full month's error logs for patterns or recurring issues that may indicate underlying problems requiring code fixes or configuration adjustments.</li>
+    </ul>
+
+    <p class="body-text"><strong>Quarterly Tasks:</strong></p>
+    <ul>
+        <li><strong>Review User Access:</strong> Audit all user accounts. Remove or deactivate accounts for employees who have left the organization. Verify that role assignments (Admin, HR, Supervisor, Management) are still appropriate.</li>
+        <li><strong>Database Maintenance:</strong> Run <code>VACUUM ANALYZE</code> on the PostgreSQL database to reclaim space and update query planner statistics. This can be done via <code>sudo -u postgres psql -d eci_hrm -c "VACUUM ANALYZE;"</code>.</li>
+        <li><strong>Security Review:</strong> Verify firewall rules are still appropriate, check for any unauthorized access attempts in server logs, and review the Nginx/IIS configuration for any needed updates.</li>
+        <li><strong>Update Node.js:</strong> Check for Node.js LTS version updates. If a new LTS version is available, test the application on the new version in a staging environment before upgrading the production server.</li>
+    </ul>
+
+    <div class="sub-heading">8.3 Troubleshooting Common Issues</div>
+
+    <p class="body-text">
+        The following table covers the most common issues encountered during production operation, their likely causes, and step-by-step resolution procedures. Always check the application logs first when diagnosing any issue, as they provide the most specific error information.
+    </p>
+
+    <table>
+        <thead>
+            <tr><th>Issue</th><th>Likely Cause</th><th>Resolution</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Server won't start</strong></td>
+                <td>Port 3000 already in use, or .env DATABASE_URL is incorrect</td>
+                <td>Check port: <code>sudo lsof -i :3000</code>. Kill conflicting process or change PORT. Verify DATABASE_URL has correct password and hostname.</td>
+            </tr>
+            <tr>
+                <td><strong>Blank page after login</strong></td>
+                <td>Static files not copied, or build is outdated</td>
+                <td>Rebuild: <code>npm run build</code>. Re-copy static files: <code>cp -r .next/static .next/standalone/.next/</code>. Restart PM2/NSSM.</td>
+            </tr>
+            <tr>
+                <td><strong>Database connection failed</strong></td>
+                <td>PostgreSQL not running, or credentials mismatch</td>
+                <td>Check service: <code>sudo systemctl status postgresql</code>. Test connection: <code>psql -U hrm_user -d eci_hrm -c "SELECT 1;"</code></td>
+            </tr>
+            <tr>
+                <td><strong>Slow page loads</strong></td>
+                <td>Large database, missing indexes, or low memory</td>
+                <td>Run <code>VACUUM ANALYZE</code>. Check indexes with <code>EXPLAIN ANALYZE</code>. Increase server RAM. Restart PM2: <code>pm2 restart eci-hrm</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>502 Bad Gateway</strong></td>
+                <td>Node.js crashed or not running behind Nginx</td>
+                <td>Check PM2 status: <code>pm2 status</code>. If stopped, check logs: <code>pm2 logs eci-hrm --err --lines 50</code>. Restart if needed.</td>
+            </tr>
+            <tr>
+                <td><strong>CSS/JS not loading</strong></td>
+                <td>Static files missing from standalone build</td>
+                <td>Verify: <code>ls .next/standalone/.next/static/</code>. If empty, re-copy: <code>cp -r .next/static .next/standalone/.next/</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="sub-heading">8.4 Updating the Application</div>
+
+    <p class="body-text">
+        When a new version of the ECI HRM application is released, follow this update procedure to minimize downtime and ensure a smooth transition. Always test the update on a staging environment before applying it to production.
+    </p>
+
+    <pre><code># 1. Backup the current deployment and database
+/opt/eci-hrm/deploy/backup-full.sh
+
+# 2. Pull the latest code
+cd /opt/eci-hrm
+git pull origin main
+
+# 3. Install updated dependencies
+npm install
+
+# 4. If the Prisma schema changed, update the database
+npx prisma generate
+npx prisma db push
+
+# 5. Rebuild the production bundle
+npm run build
+cp -r .next/static .next/standalone/.next/
+
+# 6. Restart the application
+pm2 restart eci-hrm
+
+# 7. Verify the application is running
+pm2 logs eci-hrm --lines 20
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000</code></pre>
+    <p class="body-text">
+        If the update includes database schema changes, the <code>prisma db push</code> command will apply them. If it fails due to data incompatibility, consult the release notes for manual migration steps. In case of a failed update, restore from the backup taken in step 1 and report the issue to the development team.
+    </p>
+
+    <div class="sub-heading">8.5 Support and Escalation</div>
+
+    <p class="body-text">
+        For issues that cannot be resolved using the troubleshooting guide, contact the ECI HRM development team. When reporting an issue, include the following information: a description of the problem, steps to reproduce, the exact error message, browser console output (if applicable), server logs from the time of the error, and the current application version (available from <code>git log --oneline -1</code> in the application directory).
+    </p>
+    <p class="body-text">
+        For urgent production outages that affect all users, prioritize service restoration over root cause analysis. Use the backup restore procedure if necessary to get the system back online, then investigate the root cause separately. Document all incidents and resolutions in a central log for future reference and continuous improvement of the deployment process.
+    </p>
+
+    <div class="footer-note">
+        ECI Pvt Ltd — HRM Performance Appraisal System Deployment Guide v1.0 — June 2025<br>
+        Confidential — For Internal Use Only
+    </div>
+
+</div>
+</body>
+</html>
