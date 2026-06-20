@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/auth-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
@@ -39,6 +40,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireRole(request, ["admin"]);
+    if (auth.error) return auth.error;
     const { id } = await params;
     const body = await request.json();
     const { name } = body;
@@ -72,10 +75,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireRole(request, ["admin"]);
+    if (auth.error) return auth.error;
     const { id } = await params;
 
     const existing = await db.department.findUnique({ where: { id } });
@@ -112,3 +117,4 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+

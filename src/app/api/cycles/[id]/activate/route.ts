@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireRole } from '@/lib/auth-guard';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Auth: admin only
+    const auth = await requireRole(request, ['admin']);
+    if (auth.error) return auth.error;
+
     const { id } = await params;
     const body = await request.json();
-    const { employeeIds } = body;
+    const { employeeIds, supervisorMap } = body as {
+      employeeIds?: string[];
+      supervisorMap?: Record<string, string>;
+    };
 
     const cycle = await db.appraisalCycle.findUnique({ where: { id } });
     if (!cycle) {
@@ -21,10 +29,27 @@ export async function POST(
 
     const applicableDepts: string[] = JSON.parse(cycle.applicableDepts);
 
-    // Get employees to assign: any active user who has a lineManagerId or is in the employeeIds list
-    const whereClause: Record<string, unknown> = { isActive: true };
+    // Resolve department IDs to names (User.department stores names, not IDs)
+    let deptNames: string[] = [];
     if (applicableDepts.length > 0) {
-      whereClause.department = { in: applicableDepts };
+      const deptRecords = await db.department.findMany({
+        where: { id: { in: applicableDepts } },
+        select: { name: true },
+      });
+      deptNames = deptRecords.map((d) => d.name);
+      // Also include entries that are already names (not CUIDs)
+      for (const d of applicableDepts) {
+        if (!d.startsWith('c') || d.length < 20) {
+          deptNames.push(d);
+        }
+      }
+      deptNames = [...new Set(deptNames)];
+    }
+
+    // Build where clause
+    const whereClause: Record<string, unknown> = { isActive: true };
+    if (deptNames.length > 0 && !employeeIds?.length) {
+      whereClause.department = { in: deptNames };
     }
     if (employeeIds && employeeIds.length > 0) {
       whereClause.id = { in: employeeIds };
@@ -39,7 +64,7 @@ export async function POST(
       },
     });
 
-    // Filter: only include users who have a lineManagerId OR were explicitly in employeeIds
+    // Filter: only include users who were explicitly in employeeIds OR have a lineManagerId
     const employees = allActiveUsers.filter((emp) => {
       if (employeeIds && employeeIds.length > 0 && employeeIds.includes(emp.id)) {
         return true;
@@ -51,7 +76,7 @@ export async function POST(
       return NextResponse.json({ error: 'No eligible employees found for this cycle' }, { status: 400 });
     }
 
-    // Get potential supervisors: users with supervisor/management/admin role or isSupervisor flag
+    // Get potential supervisors
     const supervisors = await db.user.findMany({
       where: {
         OR: [
@@ -69,116 +94,94 @@ export async function POST(
       select: { id: true },
     });
 
-    // Helper: find a supervisor for a given employee, preferring same department
-    function findSupervisorForEmployee(emp: typeof employees[0]): string | undefined {
-      // 1. Use lineManagerId as primary
+    // Resolve supervisor for an employee
+    function resolveSupervisor(emp: typeof employees[0]): string | undefined {
+      // 1. Use supervisorMap if provided (explicit assignment from form)
+      if (supervisorMap && supervisorMap[emp.id]) {
+        const mappedId = supervisorMap[emp.id];
+        if (mappedId !== emp.id) return mappedId;
+      }
+      // 2. Use lineManagerId
       if (emp.lineManagerId && emp.lineManagerId !== emp.id) {
         return emp.lineManagerId;
       }
-
-      // 2. Find a supervisor from same department
+      // 3. Same department supervisor
       const sameDeptSup = supervisors.find(
         (s) => s.department === emp.department && s.id !== emp.id
       );
       if (sameDeptSup) return sameDeptSup.id;
-
-      // 3. Any supervisor not the employee
+      // 4. Any supervisor
       const anySup = supervisors.find((s) => s.id !== emp.id);
       if (anySup) return anySup.id;
-
       return undefined;
     }
 
-    // Helper: find escalation supervisor (for when supervisor would be self)
+    // Find escalation supervisor (for self-review prevention)
     function findEscalationSupervisor(emp: typeof employees[0]): string | undefined {
-      // Try the employee's own lineManager
-      if (emp.lineManagerId && emp.lineManagerId !== emp.id) {
-        return emp.lineManagerId;
-      }
-
-      // Fall back to any admin/management user
+      if (emp.lineManagerId && emp.lineManagerId !== emp.id) return emp.lineManagerId;
       const fallback = adminUsers.find((a) => a.id !== emp.id);
       if (fallback) return fallback.id;
-
-      // Last resort: any supervisor not the employee
       const anySup = supervisors.find((s) => s.id !== emp.id);
       if (anySup) return anySup.id;
-
       return undefined;
     }
 
-    // Create assignments with self-review prevention
+    // Create assignments
     const assignmentData: { cycleId: string; employeeId: string; supervisorId: string; escalatedSupervisorId?: string; status: string; currentActionBy: string; deadline: Date }[] = [];
 
     for (const emp of employees) {
-      let supervisorId = findSupervisorForEmployee(emp);
-      if (!supervisorId) {
-        continue;
-      }
+      let supervisorId = resolveSupervisor(emp);
+      if (!supervisorId) continue;
 
-      // Self-review prevention: if the resolved supervisor IS the employee, escalate
       if (supervisorId === emp.id) {
         const escalationId = findEscalationSupervisor(emp);
-        if (!escalationId) {
-          // Cannot create a valid assignment - skip this employee
-          continue;
-        }
-        // Replace supervisorId with the escalation supervisor to prevent self-review
+        if (!escalationId) continue;
         supervisorId = escalationId;
         assignmentData.push({
-          cycleId: id,
-          employeeId: emp.id,
-          supervisorId,
+          cycleId: id, employeeId: emp.id, supervisorId,
           escalatedSupervisorId: escalationId,
-          status: 'assigned_to_employee',
-          currentActionBy: 'employee',
+          status: 'assigned_to_employee', currentActionBy: 'employee',
           deadline: cycle.submissionDeadline,
         });
       } else {
         assignmentData.push({
-          cycleId: id,
-          employeeId: emp.id,
-          supervisorId,
-          status: 'assigned_to_employee',
-          currentActionBy: 'employee',
+          cycleId: id, employeeId: emp.id, supervisorId,
+          status: 'assigned_to_employee', currentActionBy: 'employee',
           deadline: cycle.submissionDeadline,
         });
       }
     }
 
     if (assignmentData.length === 0) {
-      return NextResponse.json({ error: 'No valid assignments could be created. Ensure employees have line managers.' }, { status: 400 });
+      return NextResponse.json({ error: 'No valid assignments could be created. Ensure employees have line managers or supervisors are assigned.' }, { status: 400 });
     }
 
-    // Create assignments in batch
-    await db.appraisalAssignment.createMany({
-      data: assignmentData,
-    });
+    await db.appraisalAssignment.createMany({ data: assignmentData });
 
-    // Fetch created assignments to create notifications
+    // Create notifications
     const createdAssignments = await db.appraisalAssignment.findMany({
       where: { cycleId: id },
-      include: { employee: true },
+      include: { employee: true, supervisor: true },
     });
 
-    // Create notifications for employees
-    const notificationData = createdAssignments.map((a) => ({
-      userId: a.employeeId,
-      assignmentId: a.id,
-      type: 'form_assigned',
-      title: 'New Appraisal Assigned',
-      message: `You have been assigned a new appraisal: ${cycle.name}. Please complete your self-evaluation by ${cycle.submissionDeadline.toLocaleDateString()}.`,
-      actionRequired: true,
-      link: `/appraisal/${a.id}`,
-    }));
-
+    const notificationData: { userId: string; assignmentId: string; type: string; title: string; message: string; actionRequired: boolean; link: string }[] = [];
+    for (const a of createdAssignments) {
+      notificationData.push({
+        userId: a.employeeId, assignmentId: a.id, type: 'form_assigned',
+        title: 'New Appraisal Assigned',
+        message: `You have been assigned a new appraisal: ${cycle.name}. Please complete your self-evaluation by ${cycle.submissionDeadline.toLocaleDateString()}.`,
+        actionRequired: true, link: `/appraisal/${a.id}`,
+      });
+      notificationData.push({
+        userId: a.supervisorId, assignmentId: a.id, type: 'cycle_activated',
+        title: 'New Team Appraisal to Review',
+        message: `${a.employee.name} has been assigned an appraisal for cycle "${cycle.name}".`,
+        actionRequired: false, link: `/appraisal/${a.id}`,
+      });
+    }
     await db.notification.createMany({ data: notificationData });
 
-    // Update cycle status
-    await db.appraisalCycle.update({
-      where: { id },
-      data: { status: 'active' },
-    });
+    await db.appraisalCycle.update({ where: { id }, data: { status: 'active' } });
 
     return NextResponse.json({
       message: 'Cycle activated successfully',
